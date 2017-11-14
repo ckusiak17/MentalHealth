@@ -1,0 +1,36 @@
+---
+title: "Final Project Outline"
+author: "Coco Kusiak, Joshua Freeman, and Luke Toomey"
+date: "11/14/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#The Data
+
+-subset of BRFSS data
+-SAS dataset 
+
+#The Varialbes
+
+##The outcome  
+
+ADDEPEV2: ever diagnosed with depression
+
+
+##The Covariates  
+  -_RFBING5: binary for binge drinking in last 30 days
+  -_TOTINDA: binary for exercising in the last 30 days, 794 missing
+  -MSCODE: 4 levels of metropolitan status, 240,000 missing
+  -_RACE_G1: 5 level race variable
+  -_INCOMEG: 5 levels of income, 81,000 missing
+  -EMPLOY1: 9 levels employment status, 73 missing
+  -SEX: gender
+  -SXORIENT: sexual orientation, 280,000 missing
+  -TRNSGNDR: 6 level, 281,000 missing
+  -_SMOKER3: 4 level smoking status, 19,000 missing
+  -SLEPTIM1: continuous number of hours of sleep within 24 hour period, 2 missing
+
