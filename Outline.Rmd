@@ -9,6 +9,11 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+#Goal  
+
+Compare GEE to GLMM with clusters determined by race
+
+
 #The Data
 
 -subset of BRFSS data
