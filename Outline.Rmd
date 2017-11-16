@@ -51,7 +51,7 @@ QLMENTL2: felt depression symptoms in the last 30 days
  
  
 #Individual Project: Coco
-I plan on comparing LASSO, ridge regression, and step-wise regression methods for model selection. For LASSO and ridge regression, I plan on using the `glmnet` package. 
+I plan on comparing LASSO, ridge regression, and step-wise regression methods for model selection. For LASSO and ridge regression, I plan on using the `glmnet` package. For step-wise selection, I'll use the `stepAIC()` function in the `MASS` package. I plan on comparing the performance between these three models using 10-fold cross validation. 
 
 
 
