@@ -19,11 +19,11 @@ Compare GEE to GLMM with clusters determined by race
 -subset of BRFSS data
 -SAS dataset 
 
-#The Varialbes
+#The Variables
 
 ##The outcome  
 
-ADDEPEV2: ever diagnosed with depression
+QLMENTL2: felt depression symptoms in the last 30 days
 
 
 ##The Covariates  
