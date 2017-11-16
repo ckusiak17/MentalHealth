@@ -7,44 +7,69 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+require(plyr)
+require(mosaic)
 ```
 
-#Goal  
 
-Compare GEE to GLMM with clusters determined by race
+```{r loading_the_data, echo = FALSE}
+mhfp <- read.csv("bstat743fp.csv")
+mhfp <- plyr :: rename(mhfp, c("SLEPTIM1"="sleep", "SEX" = "sex", "EMPLOY1"="employ", "SXORIENT"="sexorient",  
+                       "TRNSGNDR"="trans", "QLACTLM2"="actlimit", "MSCODE"="metro", "X_TOTINDA"="exer30", 
+                       "X_RACE_G1"="race", "X_RFBMI5"="bmi",  "X_INCOMG"="income", "X_SMOKER3"="smoker",
+                       "X_RFBING5"="binge", "X_LLCPWT"="weight"))
+mhfp <- mutate(mhfp, male = ifelse(sex == 1, yes = 1, no = ifelse(sex == 2, yes = 0, no = NA)),
+               sleep = ifelse(sleep == 99 | sleep == 77, yes = NA, no = sleep),
+               sexorient = ifelse(sexorient == 1, yes = "straight", 
+                                  no = ifelse(sexorient == 2, yes = "gay", 
+                                              no = ifelse(sexorient == 3, "bisexual", 
+                                                          no = ifelse(sexorient == 4, yes = "other", no = NA)))),
+               exer30 = ifelse(exer30 == 1, yes = 1, 
+                               no = ifelse(exer30 == 2, yes = 0, no =NA)),
+               trans = ifelse(trans %in% c(1, 2, 3), yes = 1, 
+                              no = ifelse(trans == 4, yes = 0, no = NA)),
+               smoker = ifelse(smoker %in% c(1, 2), yes = 1, 
+                               no = ifelse(smoker == 3, yes = 2, 
+                                           no = ifelse(smoker == 4, yes = 0, no =NA))),
+               income = ifelse(income == 9, yes = NA, no = income),
+               actlimit = ifelse(actlimit %in% c(7, 9 ), yes = NA, no = actlimit),
+               employ = ifelse(employ == 9, yes = NA, no = employ),
+               bmi = ifelse(bmi == 1, yes = 0, no = ifelse(bmi == 2, yes = 1, no = NA)),
+               binge = ifelse(binge == 1, yes = 0, no = ifelse(binge == 2, yes = 1, no =NA))
+)
+```  
+
 
 
 #The Data
 
 -subset of BRFSS data
--SAS dataset 
+
 
 #The Variables
 
-##The outcome  
+##The Outcome  
 
 QLMENTL2: felt depression symptoms in the last 30 days
 
 
 ##The Covariates  
-  -_RFBING5: binary for binge drinking in last 30 days
-  -_TOTINDA: binary for exercising in the last 30 days, 794 missing
-  -MSCODE: 4 levels of metropolitan status, 240,000 missing
-  -_RACE_G1: 5 level race variable
-  -_INCOMEG: 5 levels of income, 81,000 missing
-  -EMPLOY1: 9 levels employment status, 73 missing
-  -SEX: gender
-  -SXORIENT: sexual orientation, 280,000 missing
-  -TRNSGNDR: 6 level, 281,000 missing
-  -_SMOKER3: 4 level smoking status, 19,000 missing
-  -SLEPTIM1: continuous number of hours of sleep within 24 hour period, 2 missing
-  - _RFBMI5: Overweight or obese calculated variable
-  - QLACTLM2: Activity Limitation Due to Health Problems
-  - red state blue state binary ??
+  -binge: binary for binge drinking in last 30 days
+  -exer30: binary for exercising in the last 30 days, 794 missing
+  -metro: 4 levels of metropolitan status, 240,000 missing
+  -race: 5 level race variable
+  -income: 5 levels of income, 81,000 missing
+  -employ: 9 levels employment status, 73 missing
+  -sex: gender
+  -sexorient: sexual orientation, 280,000 missing
+  -trans: 6 level, 281,000 missing
+  -smoker: 4 level smoking status, 19,000 missing
+  -sleep: continuous number of hours of sleep within 24 hour period, 2 missing
+  -bmi: Overweight or obese calculated variable
+  -actlimit: Activity Limitation Due to Health Problems
+
  
- 
- 
- 
+
  
 #Individual Project: Josh  
  
