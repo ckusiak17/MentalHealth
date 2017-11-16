@@ -39,6 +39,36 @@ mhfp <- mutate(mhfp, male = ifelse(sex == 1, yes = 1, no = ifelse(sex == 2, yes 
 )
 ```  
 
+```{r loading_the_data, echo = FALSE}
+par(mfrow=c(3,4))
+hist(mhfp$sleep, main="Sleep Hist.")
+hist(mhfp$employ, main="Employment Hist.")
+# hist(mhfp$sexorient, main="histogram of BMI in BRFSS")
+# hist(mhfp$trans, main="histogram of BMI in BRFSS")
+hist(mhfp$actlimit, main="Phys. Activ. Limits Hist.")
+hist(mhfp$metro, main="Metropolitan Living Hist.")
+hist(mhfp$exer30, main="Past 30 day Exercise")
+hist(mhfp$race, main="Race Hist.")
+hist(mhfp$bmi, main="Overweight (binary) Hist.")
+hist(mhfp$income, main="Income Hist.")
+hist(mhfp$smoker, main="Smoker Hist.")
+hist(mhfp$binge, main="Binge Hist.")
+hist(mhfp$male, main="Sex Hist.")
+
+summary(mhfp$sleep)
+table(mhfp$employ, useNA="ifany")
+table(mhfp$sexorient, useNA="ifany")
+table(mhfp$trans, useNA="ifany")
+table(mhfp$actlimit, useNA="ifany")
+table(mhfp$metro, useNA="ifany")
+table(mhfp$exer30, useNA="ifany")
+table(mhfp$race, useNA="ifany")
+table(mhfp$bmi, useNA="ifany")
+table(mhfp$income, useNA="ifany")
+table(mhfp$smoker, useNA="ifany")
+table(mhfp$binge, useNA="ifany")
+table(mhfp$male, useNA="ifany")
+```
 
 
 #The Data
@@ -72,11 +102,9 @@ QLMENTL2: felt depression symptoms in the last 30 days
 
  
 #Individual Project: Josh  
- 
+I plan on analyzing the BRFSS data using complete case analysis and MCMC multiple imputation analysis using the MICE R package (https://cran.r-project.org/web/packages/mice/mice.pdf). In order to examine possible differences in findings due to missingness assuming Missing at Random or Missing Completely at Random.  This will allow inferences about the population distribution within the dataset and will conserve power in the multiple imputation analysis.  
  
 #Individual Project: Coco
 I plan on comparing LASSO, ridge regression, and step-wise regression methods for model selection. For LASSO and ridge regression, I plan on using the `glmnet` package. For step-wise selection, I'll use the `stepAIC()` function in the `MASS` package. I plan on comparing the performance between these three models using 10-fold cross validation. 
-
-
 
 #Individual Project: Luke
