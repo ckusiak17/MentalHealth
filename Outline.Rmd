@@ -2,7 +2,9 @@
 title: "Final Project Outline"
 author: "Coco Kusiak, Joshua Freeman, and Luke Toomey"
 date: "11/14/2017"
-output: pdf_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -108,3 +110,4 @@ I plan on analyzing the BRFSS data using complete case analysis and MCMC multipl
 I plan on comparing LASSO, ridge regression, and step-wise regression methods for model selection. For LASSO and ridge regression, I plan on using the `glmnet` package. For step-wise selection, I'll use the `stepAIC()` function in the `MASS` package. I plan on comparing the performance between these three models using 10-fold cross validation. 
 
 #Individual Project: Luke
+I plan to fit a general linear mixed multilevel model with a hierarchical random term to the data. I will consider this as a two level model with with county at level one and state at level two, as the random effects and other covariates listed above as the fixed effects. This will be done using the `lme4` package. Diagnostics, including covariate selection will then be done using the `MMS` package for fixed effects selection in linear mixed models, followed by inference. We will compare the GLM model with the GLMM model.
