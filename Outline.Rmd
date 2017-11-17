@@ -13,7 +13,7 @@ require(plyr)
 require(mosaic)
 ```
 
-
+Cleaning the dataset for analyses.
 ```{r loading_the_data, echo = FALSE}
 mhfp <- read.csv("bstat743fp.csv")
 mhfp <- plyr :: rename(mhfp, c("SLEPTIM1"="sleep", "SEX" = "sex", "EMPLOY1"="employ", "SXORIENT"="sexorient",  
@@ -41,6 +41,7 @@ mhfp <- mutate(mhfp, male = ifelse(sex == 1, yes = 1, no = ifelse(sex == 2, yes 
 )
 ```  
 
+Basic histograms of the data and numbers (n) per variable levels.
 ```{r loading_the_data, echo = FALSE}
 par(mfrow=c(3,4))
 hist(mhfp$sleep, main="Sleep Hist.")
@@ -75,8 +76,7 @@ table(mhfp$male, useNA="ifany")
 
 #The Data
 
--subset of BRFSS data
-
+-A subset of BRFSS data
 
 #The Variables
 
