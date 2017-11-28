@@ -41,7 +41,7 @@ mhfp <- mutate(mhfp, male = ifelse(sex == 1, yes = 1, no = ifelse(sex == 2, yes 
 )
 ```  
 
-Basic histograms of the data and numbers (n) per variable levels.
+Basic histograms of the data and numbers (n) per variable levels including missingness.  Please note we had issues graphing the historgrams for sexorient and transgender variables. However, (n) per level of the variable is available in the tables.
 ```{r loading_the_data, echo = FALSE}
 par(mfrow=c(3,4))
 hist(mhfp$sleep, main="Sleep Hist.")
@@ -104,7 +104,7 @@ QLMENTL2: felt depression symptoms in the last 30 days
 
  
 #Individual Project: Josh  
-I plan on analyzing the BRFSS data using complete case analysis and MCMC multiple imputation analysis using the MICE R package (https://cran.r-project.org/web/packages/mice/mice.pdf). In order to examine possible differences in findings due to missingness assuming Missing at Random or Missing Completely at Random.  This will allow inferences about the population distribution within the dataset and will conserve power in the multiple imputation analysis.  
+I plan on analyzing the BRFSS data using complete case analysis and MCMC multiple imputation analysis using the MICE R package (https://cran.r-project.org/web/packages/mice/mice.pdf). In order to examine possible differences in findings due to missingness assuming Missing at Random or Missing Completely at Random, imputation will be carried out imputing multiple datasets and using a weighted dataset based on all imputed sub-datasets.  This will allow inferences about the population distribution within the dataset and will conserve power in the multiple imputation analysis.  
  
 #Individual Project: Coco
 I plan on comparing LASSO, ridge regression, and step-wise regression methods for model selection. For LASSO and ridge regression, I plan on using the `glmnet` package. For step-wise selection, I'll use the `stepAIC()` function in the `MASS` package. I plan on comparing the performance between these three models using 10-fold cross validation. 
