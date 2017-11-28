@@ -3,8 +3,9 @@ title: "Final Project Outline"
 author: "Coco Kusiak, Joshua Freeman, and Luke Toomey"
 date: "11/14/2017"
 output:
-  html_document: default
+  word_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -14,12 +15,13 @@ require(mosaic)
 ```
 
 Cleaning the dataset for analyses.
-```{r loading_the_data, echo = FALSE}
-mhfp <- read.csv("bstat743fp.csv")
-mhfp <- plyr :: rename(mhfp, c("SLEPTIM1"="sleep", "SEX" = "sex", "EMPLOY1"="employ", "SXORIENT"="sexorient",  
-                       "TRNSGNDR"="trans", "QLACTLM2"="actlimit", "MSCODE"="metro", "X_TOTINDA"="exer30", 
-                       "X_RACE_G1"="race", "X_RFBMI5"="bmi",  "X_INCOMG"="income", "X_SMOKER3"="smoker",
-                       "X_RFBING5"="binge", "X_LLCPWT"="weight"))
+```{r, echo = FALSE}
+load("mhfp2.Rda")
+mhfp<-bstat743fp
+mhfp <- plyr :: rename(mhfp, c("SLEPTIM1"="sleep", "QLMENTL2"="mental", "SEX" = "sex", "EMPLOY1"="employ", "SXORIENT"="sexorient",
+                       "TRNSGNDR"="trans", "QLACTLM2"="actlimit", "MSCODE"="metro", "_TOTINDA"="exer30", 
+                       "_RACE_G1"="race", "_RFBMI5"="bmi",  "_INCOMG"="income", "_SMOKER3"="smoker",
+                       "_RFBING5"="binge", "_LLCPWT"="weight"))
 mhfp <- mutate(mhfp, male = ifelse(sex == 1, yes = 1, no = ifelse(sex == 2, yes = 0, no = NA)),
                sleep = ifelse(sleep == 99 | sleep == 77, yes = NA, no = sleep),
                sexorient = ifelse(sexorient == 1, yes = "straight", 
@@ -43,16 +45,20 @@ mhfp <- mutate(mhfp, male = ifelse(sex == 1, yes = 1, no = ifelse(sex == 2, yes 
 
 Basic histograms of the data and numbers (n) per variable levels including missingness.  Please note we had issues graphing the historgrams for sexorient and transgender variables. However, (n) per level of the variable is available in the tables.
 ```{r loading_the_data, echo = FALSE}
-par(mfrow=c(3,4))
+par(mfrow=c(2,2))
 hist(mhfp$sleep, main="Sleep Hist.")
 hist(mhfp$employ, main="Employment Hist.")
 # hist(mhfp$sexorient, main="histogram of BMI in BRFSS")
 # hist(mhfp$trans, main="histogram of BMI in BRFSS")
 hist(mhfp$actlimit, main="Phys. Activ. Limits Hist.")
+
+par(mfrow=c(2,2))
 hist(mhfp$metro, main="Metropolitan Living Hist.")
 hist(mhfp$exer30, main="Past 30 day Exercise")
 hist(mhfp$race, main="Race Hist.")
 hist(mhfp$bmi, main="Overweight (binary) Hist.")
+
+par(mfrow=c(2,2))
 hist(mhfp$income, main="Income Hist.")
 hist(mhfp$smoker, main="Smoker Hist.")
 hist(mhfp$binge, main="Binge Hist.")
@@ -73,6 +79,25 @@ table(mhfp$binge, useNA="ifany")
 table(mhfp$male, useNA="ifany")
 ```
 
+#Multiple Imputations MICE##
+```{r}
+library(mice)
+md.pattern(mhfp)
+library(VIM)
+miplot <- aggr(mhfp, col=c('red','blue'),
+                    numbers=TRUE, sortVars=TRUE,
+                    labels=names(mhfp), cex.axis=.7,
+                    gap=3, ylab=c("Missing data","Pattern"))
+
+
+imputedat<-mice(mhfp, m=10, maxit = 20, method = 'sample', seed = 500, print="false")
+summary(imputedat)
+compdat<-complete(imputedat,2)
+
+
+
+```
+
 
 #The Data
 
@@ -82,8 +107,7 @@ table(mhfp$male, useNA="ifany")
 
 ##The Outcome  
 
-QLMENTL2: felt depression symptoms in the last 30 days
-
+QLMENTL2: Felt depression symptoms in the last 30 days
 
 ##The Covariates  
   -binge: binary for binge drinking in last 30 days
