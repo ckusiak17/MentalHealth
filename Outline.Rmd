@@ -18,6 +18,7 @@ Cleaning the dataset for analyses.
 ```{r, echo = FALSE}
 load("mhfp2.Rda")
 mhfp<-bstat743fp
+mhfp <- subset(mhfp, select=-QLMENTL2)
 mhfp <- plyr :: rename(mhfp, c("SLEPTIM1"="sleep", "MENTHLTH"="mental", "SEX" = "sex", "EMPLOY1"="employ", "SXORIENT"="sexorient",
                        "TRNSGNDR"="trans", "QLACTLM2"="actlimit", "MSCODE"="metro", "_TOTINDA"="exer30", 
                        "_RACE_G1"="race", "_RFBMI5"="bmi",  "_INCOMG"="income", "_SMOKER3"="smoker",
