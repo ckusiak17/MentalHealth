@@ -23,6 +23,7 @@ mhfp <- plyr :: rename(mhfp, c("SLEPTIM1"="sleep", "QLMENTL2"="mental", "SEX" = 
                        "_RACE_G1"="race", "_RFBMI5"="bmi",  "_INCOMG"="income", "_SMOKER3"="smoker",
                        "_RFBING5"="binge", "_LLCPWT"="weight"))
 mhfp <- mutate(mhfp, male = ifelse(sex == 1, yes = 1, no = ifelse(sex == 2, yes = 0, no = NA)),
+               mental = ifelse(mental == 88, yes = 0, no = ifelse(mental %in% c(77, 99), yes = NA, no = 1)),
                sleep = ifelse(sleep == 99 | sleep == 77, yes = NA, no = sleep),
                sexorient = ifelse(sexorient == 1, yes = "straight", 
                                   no = ifelse(sexorient == 2, yes = "gay", 
@@ -41,6 +42,7 @@ mhfp <- mutate(mhfp, male = ifelse(sex == 1, yes = 1, no = ifelse(sex == 2, yes 
                bmi = ifelse(bmi == 1, yes = 0, no = ifelse(bmi == 2, yes = 1, no = NA)),
                binge = ifelse(binge == 1, yes = 0, no = ifelse(binge == 2, yes = 1, no =NA))
 )
+save(mhfp, file = "mental_final.Rda")
 ```  
 
 Basic histograms of the data and numbers (n) per variable levels including missingness.  Please note we had issues graphing the historgrams for sexorient and transgender variables. However, (n) per level of the variable is available in the tables.
