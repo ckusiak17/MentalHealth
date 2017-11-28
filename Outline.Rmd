@@ -18,7 +18,7 @@ Cleaning the dataset for analyses.
 ```{r, echo = FALSE}
 load("mhfp2.Rda")
 mhfp<-bstat743fp
-mhfp <- plyr :: rename(mhfp, c("SLEPTIM1"="sleep", "QLMENTL2"="mental", "SEX" = "sex", "EMPLOY1"="employ", "SXORIENT"="sexorient",
+mhfp <- plyr :: rename(mhfp, c("SLEPTIM1"="sleep", "MENTHLTH"="mental", "SEX" = "sex", "EMPLOY1"="employ", "SXORIENT"="sexorient",
                        "TRNSGNDR"="trans", "QLACTLM2"="actlimit", "MSCODE"="metro", "_TOTINDA"="exer30", 
                        "_RACE_G1"="race", "_RFBMI5"="bmi",  "_INCOMG"="income", "_SMOKER3"="smoker",
                        "_RFBING5"="binge", "_LLCPWT"="weight"))
@@ -95,8 +95,16 @@ miplot <- aggr(mhfp, col=c('red','blue'),
 imputedat<-mice(mhfp, m=10, maxit = 20, method = 'sample', seed = 500, print="false")
 summary(imputedat)
 compdat<-complete(imputedat,2)
+str(imputedat$imp$sexorient)
 
+ alltest = complete(t3_impute, action="long") head(alltest)
+ 
+  mi.test =(glm.mids(y ~ x1 + x2 + x3 + x4 + x5 + x6 +
+head(summary(mi.test))
 
+ combined.test = pool(mi.test); library(xtable)
+ 
+ print(xtable(summary(combined.test)[,c("est","se","lo 95", "hi 95", "nmis"]
 
 ```
 
