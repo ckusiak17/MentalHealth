@@ -44,6 +44,7 @@ mhfp <- mutate(mhfp, male = ifelse(sex == 1, yes = 1, no = ifelse(sex == 2, yes 
                binge = ifelse(binge == 1, yes = 0, no = ifelse(binge == 2, yes = 1, no =NA))
 )
 save(mhfp, file = "mental_final.Rda")
+mhfp$sexorient<-as.numeric(as.factor(mhfp$sexorient))
 ```  
 
 Basic histograms of the data and numbers (n) per variable levels including missingness.  Please note we had issues graphing the historgrams for sexorient and transgender variables. However, (n) per level of the variable is available in the tables.
@@ -92,8 +93,7 @@ miplot <- aggr(mhfp, col=c('red','blue'),
                     labels=names(mhfp), cex.axis=.7,
                     gap=3, ylab=c("Missing data","Pattern"))
 
-
-imputedat<-mice(mhfp, m=10, maxit = 20, method = 'sample', seed = 500, print="false")
+imputedat<-mice(mhfp, m=10, maxit = 20, method = 'sample', seed = 500)
 summary(imputedat)
 compdat<-complete(imputedat,2)
 str(imputedat$imp$sexorient)
@@ -106,6 +106,9 @@ str(imputedat$imp$sexorient)
 # combined.test = pool(mi.test); library(xtable)
 # 
 # print(xtable(summary(combined.test)[,c("est","se","lo 95", "hi 95", "nmis"]
+
+save(imputedat, file = "imputedsets.Rda")
+save(compdat, file="completeimputed.Rda")
 
 ```
 
