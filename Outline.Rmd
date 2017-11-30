@@ -43,6 +43,7 @@ mhfp <- mutate(mhfp, male = ifelse(sex == 1, yes = 1, no = ifelse(sex == 2, yes 
                bmi = ifelse(bmi == 1, yes = 0, no = ifelse(bmi == 2, yes = 1, no = NA)),
                binge = ifelse(binge == 1, yes = 0, no = ifelse(binge == 2, yes = 1, no =NA))
 )
+mhfp<-subset(mhfp, select=-sex)
 save(mhfp, file = "mental_final.Rda")
 mhfp$sexorient<-as.numeric(as.factor(mhfp$sexorient))
 ```  
@@ -93,10 +94,10 @@ miplot <- aggr(mhfp, col=c('red','blue'),
                     labels=names(mhfp), cex.axis=.7,
                     gap=3, ylab=c("Missing data","Pattern"))
 
-imputedat<-mice(mhfp, m=10, maxit = 20, method = 'sample', seed = 500)
+imputedat<-mice(mhfp, m=10, maxit = 20, method = 'sample', seed = 500, print=FALSE)
 summary(imputedat)
 compdat<-complete(imputedat,2)
-str(imputedat$imp$sexorient)
+#str(imputedat$imp$sexorient)
 
 #alltest = complete(t3_impute, action="long") head(alltest)
  
@@ -111,6 +112,8 @@ save(imputedat, file = "imputedsets.Rda")
 save(compdat, file="completeimputed.Rda")
 
 ```
+
+
 
 
 #The Data
