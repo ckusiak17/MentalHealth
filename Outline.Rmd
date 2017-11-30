@@ -18,11 +18,10 @@ Cleaning the dataset for analyses.
 ```{r, echo = FALSE}
 load("mhfp2.Rda")
 mhfp<-bstat743fp
-mhfp <- subset(mhfp, select=-c(QLMENTL2, `_LLCPWT`))
 mhfp <- plyr :: rename(mhfp, c("SLEPTIM1"="sleep", "MENTHLTH"="mental", "SEX" = "sex", "EMPLOY1"="employ", "SXORIENT"="sexorient",
                        "TRNSGNDR"="trans", "QLACTLM2"="actlimit", "MSCODE"="metro", "_TOTINDA"="exer30", 
                        "_RACE_G1"="race", "_RFBMI5"="bmi",  "_INCOMG"="income", "_SMOKER3"="smoker",
-                       "_RFBING5"="binge", "_STATE"="state"))
+                       "_RFBING5"="binge", "_LLCPWT"="weight"))
 mhfp <- mutate(mhfp, male = ifelse(sex == 1, yes = 1, no = ifelse(sex == 2, yes = 0, no = NA)),
                mental = ifelse(mental == 88, yes = 0, no = ifelse(mental %in% c(77, 99), yes = NA, no = 1)),
                sleep = ifelse(sleep == 99 | sleep == 77, yes = NA, no = sleep),
@@ -44,7 +43,6 @@ mhfp <- mutate(mhfp, male = ifelse(sex == 1, yes = 1, no = ifelse(sex == 2, yes 
                binge = ifelse(binge == 1, yes = 0, no = ifelse(binge == 2, yes = 1, no =NA))
 )
 save(mhfp, file = "mental_final.Rda")
-mhfp$sexorient<-as.numeric(as.factor(mhfp$sexorient))
 ```  
 
 Basic histograms of the data and numbers (n) per variable levels including missingness.  Please note we had issues graphing the historgrams for sexorient and transgender variables. However, (n) per level of the variable is available in the tables.
@@ -93,22 +91,20 @@ miplot <- aggr(mhfp, col=c('red','blue'),
                     labels=names(mhfp), cex.axis=.7,
                     gap=3, ylab=c("Missing data","Pattern"))
 
-imputedat<-mice(mhfp, m=10, maxit = 20, method = 'sample', seed = 500)
+
+imputedat<-mice(mhfp, m=10, maxit = 20, method = 'sample', seed = 500, print="false")
 summary(imputedat)
 compdat<-complete(imputedat,2)
 str(imputedat$imp$sexorient)
 
-#alltest = complete(t3_impute, action="long") head(alltest)
+ alltest = complete(t3_impute, action="long") head(alltest)
  
-# mi.test =(glm.mids(y ~ x1 + x2 + x3 + x4 + x5 + x6 +)
-# head(summary(mi.test))
-# 
-# combined.test = pool(mi.test); library(xtable)
-# 
-# print(xtable(summary(combined.test)[,c("est","se","lo 95", "hi 95", "nmis"]
+  mi.test =(glm.mids(y ~ x1 + x2 + x3 + x4 + x5 + x6 +
+head(summary(mi.test))
 
-save(imputedat, file = "imputedsets.Rda")
-save(compdat, file="completeimputed.Rda")
+ combined.test = pool(mi.test); library(xtable)
+ 
+ print(xtable(summary(combined.test)[,c("est","se","lo 95", "hi 95", "nmis"]
 
 ```
 
@@ -121,7 +117,7 @@ save(compdat, file="completeimputed.Rda")
 
 ##The Outcome  
 
-mental: Felt stress, poor mental health, or depression symptoms in the last 30 days (binary)
+QLMENTL2: Felt depression symptoms in the last 30 days
 
 ##The Covariates  
   -binge: binary for binge drinking in last 30 days
@@ -149,3 +145,18 @@ I plan on comparing LASSO, ridge regression, and step-wise regression methods fo
 
 #Individual Project: Luke
 I plan to fit a general linear mixed multilevel model with a hierarchical random term to the data. I will consider this as a two level model with with county at level one and state at level two, as the random effects and other covariates listed above as the fixed effects. This will be done using the `lme4` package. Diagnostics, including covariate selection will then be done using the `MMS` package for fixed effects selection in linear mixed models, followed by inference. We will compare the GLM model with the GLMM model.
+
+```{r}
+head(mhfp)
+
+
+names(mhfp)
+library(lme4)
+
+randmod <- lmer(mental ~ sleep + sex + employ + sexorient +
+                      + trans + metro + exer30 +
+                       race + bmi + income + smoker +
+                    binge + weight + (1 | state ) + (1 | metro ), data = mhfp)
+names
+```
+
