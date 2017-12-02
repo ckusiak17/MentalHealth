@@ -105,7 +105,6 @@ summary(imputedat50)
 compdat50<-complete(imputedat50,2)
 save(imputedat50, file = "imputedsets50.Rda")
 save(compdat50, file="completeimputed50.Rda")
-
 ```
 
 
