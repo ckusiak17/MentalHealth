@@ -92,16 +92,21 @@ miplot <- aggr(mhfp, col=c('red','blue'),
                     labels=names(mhfp), cex.axis=.7,
                     gap=3, ylab=c("Missing data","Pattern"))
 
-
+##20 iterations##
 imputedat<-mice(mhfp, m=10, maxit = 20, method = 'sample', seed = 500, print=FALSE)
 summary(imputedat)
 compdat<-complete(imputedat,2)
-
 save(imputedat, file = "imputedsets.Rda")
 save(compdat, file = "completeimputed.Rda")
+
+##50 iterations##
+imputedat50<-mice(mhfp, m=10, maxit = 50, method = 'sample', seed = 500, print=FALSE)
+summary(imputedat50)
+compdat50<-complete(imputedat50,2)
+save(imputedat50, file = "imputedsets50.Rda")
+save(compdat50, file="completeimputed50.Rda")
+
 ```
-
-
 
 
 ```{r}  
@@ -122,7 +127,21 @@ comb.test = pool(mi.fit)
 print(xtable(summary(comb.test)[,c("est","se","lo 95", "hi 95", "nmis", "fmi")]))
 ```
 
-
+```{r}
+##Code used from Ken Kleinmann lectures##
+library(mice)
+library(VIM)
+library(xtable)
+str(imputedat$imp$sexorient)
+completedatfit50 = complete(imputedat50, action="long") 
+head(completedatfit50)
+##Pooled Imputed Model##
+mi.fit50=glm.mids(mental~state + sleep + male + employ + actlimit + metro + exer30 + race + income + smoker + binge, family="binomial", data=imputedat50)
+head(summary(mi.fit50))
+comb.test50 = pool(mi.fit50)
+##Summary Table##
+print(xtable(summary(comb.test50)[,c("est","se","lo 95", "hi 95", "nmis", "fmi")]))
+```
 
 
 #The Data
