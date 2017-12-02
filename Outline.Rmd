@@ -85,8 +85,8 @@ table(mhfp$male, useNA="ifany")
 #Multiple Imputations MICE##
 ```{r}
 library(mice)
-md.pattern(mhfp)
 library(VIM)
+md.pattern(mhfp)
 miplot <- aggr(mhfp, col=c('red','blue'),
                     numbers=TRUE, sortVars=TRUE,
                     labels=names(mhfp), cex.axis=.7,
@@ -96,21 +96,30 @@ miplot <- aggr(mhfp, col=c('red','blue'),
 imputedat<-mice(mhfp, m=10, maxit = 20, method = 'sample', seed = 500, print=FALSE)
 summary(imputedat)
 compdat<-complete(imputedat,2)
-#str(imputedat$imp$sexorient)
-
-#alltest = complete(t3_impute, action="long") head(alltest)
- 
-#mi.test =(glm.mids(y ~ x1 + x2 + x3 + x4 + x5 + x6 +
-#head(summary(mi.test))
-
-#combined.test = pool(mi.test); library(xtable)
- 
-#print(xtable(summary(combined.test)[,c("est","se","lo 95", "hi 95", "nmis"]
 
 save(imputedat, file = "imputedsets.Rda")
 save(compdat, file = "completeimputed.Rda")
+```
 
 
+
+
+```{r}  
+##Code used from Ken Kleinmann lectures##
+library(mice)
+library(VIM)
+library(xtable)
+##Complete Case Model##
+glm(formula=mental~state + sleep + male + employ + actlimit + metro + exer30 + race + income + smoker + binge, family="binomial", data=mhfp)
+str(imputedat$imp$sexorient)
+completedatfit = complete(imputedat, action="long") 
+head(completedatfit)
+##Pooled Imputed Model##
+mi.fit=glm.mids(mental~state + sleep + male + employ + actlimit + metro + exer30 + race + income + smoker + binge, family="binomial", data=imputedat)
+head(summary(mi.fit))
+comb.test = pool(mi.fit)
+##Summary Table##
+print(xtable(summary(comb.test)[,c("est","se","lo 95", "hi 95", "nmis", "fmi")]))
 ```
 
 
