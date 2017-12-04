@@ -2,11 +2,12 @@ require(glmnet)
 require(MASS)
 require(pROC)
 require(mosaic)
-load("mental_final.Rda")
+load("completeimputed.Rda")
 
 
-ment <- subset(mhfp, select = - c(trans, sexorient))
-ment <- ment[complete.cases(ment), ]
+#ment <- subset(compdat, select = - c(trans, sexorient))
+#ment <- ment[complete.cases(ment), ]
+ment <- compdat[complete.cases(compdat),] # should not be necessary after all data is imputed
 x <- subset(x = ment, select = -mental)
 
 x<-as.matrix(x)
@@ -41,23 +42,25 @@ stepAIC(binom, direction= "both")
 model.AIC <- glm(mental ~ state + sleep + sex + employ + actlimit + 
                    metro + exer30 + race + income + smoker + binge, family = "binomial", 
                  data = ment)
-preds.AIC <- predict(model.AIC, newx = x, type = "response")
-
+or.AIC <- predict(model.AIC, newx = x, type = "response")
+preds.AIC <- ifelse(or.AIC < .5, yes = 0, no = 1)
 
 #Model Comparisons
-ment <- mutate(ment, y.lasso = preds.lasso, y.ridge = preds.ridge)
+ment <- mutate(ment, y.lasso = preds.lasso, y.ridge = preds.ridge, y.aic = preds.AIC)
 rmse <- function(truths, predictions){
   error <- truths - predictions
   return(sqrt(mean(error^2)))
 }
 rmse.lasso <- rmse(truths = y, predictions = ment$y.lasso)
 rmse.ridge <- rmse(truths = y, predictions = ment$y.ridge)
+rmse.aic <- rmse(truths = y, predictions = ment$y.aic)
 rmse.lasso
 rmse.ridge
+rmse.aic
 
 roc.lasso <- roc(predictor = ment$y.lasso, response = ment$mental)
 roc.ridge <- roc(predictor = ment$y.ridge, response = ment$mental)
-roc.aic <- roc(predictor = preds.AIC, response = ment$mental)
+roc.aic <- roc(predictor = ment$y.aic, response = ment$mental)
 auc.lasso <- auc(roc.lasso)
 auc.ridge <- auc(roc.ridge)
 auc.aic <- auc(roc.aic)
