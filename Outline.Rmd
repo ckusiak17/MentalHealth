@@ -48,26 +48,30 @@ save(mhfp, file = "mental_final.Rda")
 
 Basic histograms of the data and numbers (n) per variable levels including missingness.  Please note we had issues graphing the historgrams for sexorient and transgender variables. However, (n) per level of the variable is available in the tables.
 ```{r loading_the_data, echo = FALSE}
-par(mfrow=c(2,2))
-hist(mhfp$sleep, main="Sleep Hist.")
-hist(mhfp$employ, main="Employment Hist.")
+# par(mfrow=c(2,2))
+# hist(mhfp$sleep, main="Sleep Hist.")
+# hist(mhfp$employ, main="Employment Hist.")
 # hist(mhfp$sexorient, main="histogram of BMI in BRFSS")
 # hist(mhfp$trans, main="histogram of BMI in BRFSS")
-hist(mhfp$actlimit, main="Phys. Activ. Limits Hist.")
-
-par(mfrow=c(2,2))
-hist(mhfp$metro, main="Metropolitan Living Hist.")
-hist(mhfp$exer30, main="Past 30 day Exercise")
-hist(mhfp$race, main="Race Hist.")
-hist(mhfp$bmi, main="Overweight (binary) Hist.")
-
-par(mfrow=c(2,2))
-hist(mhfp$income, main="Income Hist.")
-hist(mhfp$smoker, main="Smoker Hist.")
-hist(mhfp$binge, main="Binge Hist.")
-hist(mhfp$male, main="Sex Hist.")
+# 
+# hist(mhfp$actlimit, main="Phys. Activ. Limits Hist.")
+# 
+# par(mfrow=c(2,2))
+# hist(mhfp$metro, main="Metropolitan Living Hist.")
+# hist(mhfp$exer30, main="Past 30 day Exercise")
+# hist(mhfp$race, main="Race Hist.")
+# hist(mhfp$bmi, main="Overweight (binary) Hist.")
+# 
+# par(mfrow=c(2,2))
+# hist(mhfp$income, main="Income Hist.")
+# hist(mhfp$smoker, main="Smoker Hist.")
+# hist(mhfp$binge, main="Binge Hist.")
+# hist(mhfp$male, main="Sex Hist.")
 
 summary(mhfp$sleep)
+table(mhfp$state, useNA="ifany")
+table(mhfp$mental, useNA="ifany")
+table(mhfp$sleep, useNA="ifany")
 table(mhfp$employ, useNA="ifany")
 table(mhfp$sexorient, useNA="ifany")
 table(mhfp$trans, useNA="ifany")
@@ -107,15 +111,14 @@ save(imputedat50, file = "imputedsets50.Rda")
 save(compdat50, file="completeimputed50.Rda")
 ```
 
-
-```{r}  
 ##Code used from Ken Kleinmann lectures##
+```{r}  
 library(mice)
 library(VIM)
 library(xtable)
 ##Complete Case Model##
-glm(formula=mental~state + sleep + male + employ + actlimit + metro + exer30 + race + income + smoker + binge, family="binomial", data=mhfp)
-str(imputedat$imp$sexorient)
+fit.cc<-glm(formula=mental~state + sleep + male + employ + actlimit + metro + exer30 + race + income + smoker + binge, family="binomial", data=mhfp)
+#str(imputedat$imp$sexorient)
 completedatfit = complete(imputedat, action="long") 
 head(completedatfit)
 ##Pooled Imputed Model##
@@ -123,7 +126,7 @@ mi.fit=glm.mids(mental~state + sleep + male + employ + actlimit + metro + exer30
 head(summary(mi.fit))
 comb.test = pool(mi.fit)
 ##Summary Table##
-print(xtable(summary(comb.test)[,c("est","se","lo 95", "hi 95", "nmis", "fmi")]))
+print(xtable(summary(comb.test)[,c("est","se","fmi")]))
 ```
 
 ```{r}
@@ -139,8 +142,19 @@ mi.fit50=glm.mids(mental~state + sleep + male + employ + actlimit + metro + exer
 head(summary(mi.fit50))
 comb.test50 = pool(mi.fit50)
 ##Summary Table##
-print(xtable(summary(comb.test50)[,c("est","se","lo 95", "hi 95", "nmis", "fmi")]))
+print(xtable(summary(comb.test50)[,c("est","se","fmi")]))
 ```
+
+##Parsimonious Model:##
+$$Pr(Y_{mental}=1|0) = \beta_{state}X_{1} + \beta_{sleep}X_{2} + \beta_{male}X_{3} + \beta_{employ}X_{4} + \beta_{actlimit}X_{5} + \beta_{metro}X_{6} + \beta_{exer30}X_{7} + \beta_{race}X_{8} + \beta_{income}X_{9} + \beta_{smoker}X_{10} + \beta_{binge}X_{11}$$
+$$ Y|\pi \sim Binomial(n, \pi) $$
+$$E(Y|\pi) = n\pi$$
+$$V(Y|\pi)= n\pi(1-\pi)$$
+
+
+
+
+
 
 
 #The Data
