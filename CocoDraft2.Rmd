@@ -1,0 +1,206 @@
+---
+title: "Untitled"
+author: "Coco Kusiak"
+date: "12/6/2017"
+output: pdf_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(glmnet)
+require(MASS)
+require(pROC)
+require(mosaic)
+load("completeimputed50.Rda")
+ment <- compdat50 
+options(xtable.comment = FALSE)
+```
+
+#Overview  
+
+The goal of my project is to test the performance of the different model selection algorithms lasso, ridge  and stepwise regressions. I will begin by using each of these models to find the best model for our data. From there I will choose which model has the best fit based on RMSE and AUC. I will use this model to simulate our outcome variable `mental` 1,000 times. Next, I will run the model selections algorithms again on each simulated set of the outcome. Finally I will compare the AUCs for each of these models again to determine overall which has the best performance. 
+
+#Step 1 Running the LASSO, ridge, and stepAIC algorithms 
+
+The first two methods we will use for model specification is Least Absolute Shrinkage Selection Operator (LASSO) regression and ridge regression. In addition to minimizing the residual some of squares, these methods penalize covariates in our model based on some constraints.     
+
+For ridge regression this can be written as: $\sum_{j=1}^p \beta^2_j < c$ with p = # of predictors and c a constant. For LASSO, this can be written as $\sum_{j=1}^p |\beta_j| < c$. Both methods were run on our data.  
+
+```{r preparing_data, echo = FALSE, message = FALSE}
+ment$income <-  as.factor(ment$income)
+ment$state <-  as.factor(ment$state)
+ment$metro <-  as.factor(ment$metro)
+ment$smoker <-  as.factor(ment$smoker)
+ment$employ <-  as.factor(ment$employ)
+ment$trans <-  as.factor(ment$trans)
+ment$actlimit <-  as.factor(ment$actlimit)
+ment$sexorient <- as.factor(ment$sexorient)
+ment$race <- as.factor(ment$race)
+
+require(xtable)
+x <- subset(x = ment, select = -mental)
+x<-data.matrix(x)
+y<-data.matrix(ment$mental)
+
+
+#LASSO
+lasso <- glmnet(x, y, family = "binomial", alpha = 1)
+#plot.lasso <- plot(lasso, xvar = "dev", main = "LASSO Regression")
+
+
+cv.lasso <- cv.glmnet(x, y, family = "binomial", type.measure = "auc", alpha = 1)
+#plot(cv.lasso)
+#coef(cv.lasso)
+
+
+#RIDGE
+ridge <- glmnet(x, y, family = "binomial", alpha=0)
+#plot.ridge <- plot(ridge, xvar = "dev", main = "Ridge Regression")
+
+cv.ridge <- cv.glmnet(x, y, family = "binomial", type.measure = "auc", alpha = 0)
+#plot(cv.ridge)
+#coef(cv.ridge)
+
+#StepAIC
+ment <- mutate(ment, mental = as.factor(mental))
+binom <- glm(mental ~ ., data = ment, family = "binomial")
+step <- stepAIC(binom, direction= "both", trace = FALSE)
+model.AIC <- glm(step$formula, family = "binomial", 
+                 data = ment)
+par(mfrow = c(1, 2))
+plot(lasso, xvar = "dev", main = "LASSO Regression")
+plot(ridge, xvar = "dev", main = "Ridge Regression")
+```  
+
+
+As shown in the plots above, the LASSO method shrinks some of the variables' coefficients down to zero, removing them from the model. The ridge method shrinks coefficeints as well, but only to be __close__ to 0.    
+
+The final selection algorithm we will use is stepwise regression. This method begins with a set of candidate predictors and adds and removes them based on improving the model's AIC. This is implemented on our data in both the forward and backward directions.  
+
+```{r, echo='FALSE', results='asis'}
+require(xtable)
+lasso.coef <- as.data.frame(as.matrix(coefficients(cv.lasso)))
+colnames(lasso.coef) <- "LASSO"
+lasso.coef <- mutate(lasso.coef, variable = rownames(lasso.coef))
+
+ridge.coef <- as.data.frame(as.matrix(coefficients(cv.ridge)))
+colnames(ridge.coef) <- "Ridge"
+ridge.coef <- mutate(ridge.coef, variable = rownames(ridge.coef))
+
+aic.coef <- as.data.frame(summary(model.AIC)$coefficients[,"Estimate"])
+colnames(aic.coef) <- "Stepwise"
+aic.coef <- mutate(aic.coef, variable = rownames(aic.coef))
+
+coefficients <- merge(aic.coef, lasso.coef, by= "variable", all = TRUE)
+coefficients <- merge(coefficients, ridge.coef, by = "variable", all = TRUE)
+
+xtable(coefficients)
+```
+
+The selection algorithms seem to yield fairly similar results. For example, `trans` is weighted very little across the three models and `binge` has a lot of weight across the three. The stepwise and LASSO yield the same bumber of predictors.
+
+
+Now, to test the performance of each model, we will run a 10-fold cross validation with the three models specified above.
+
+```{r validation}
+folds <- rep(1:10, each = 48630)
+folds <- c(folds, 1:3)
+folds <- sample(folds)
+ment <- mutate(ment, fold = folds)
+
+auc.test.lasso <- c()
+auc.test.ridge <- c()
+auc.test.aic <- c()
+for (i in 1:10){
+  data.training <- filter(ment, fold != i)
+  data.test <- filter(ment, fold == i)
+  x.training <- subset(x = data.training, select = -mental)
+  x.training <- data.matrix(x.training)
+  y.training <- data.matrix(data.training$mental)
+  x.test <- subset(x = data.test, select = -mental)
+  x.test <- data.matrix(x.test)
+  y.test <- data.matrix(data.test$mental)
+  #the models 
+  cv.lasso <- cv.glmnet(x.training, y.training, family = "binomial", type.measure = "auc", alpha = 1)
+  cv.ridge <- cv.glmnet(x.training, y.training, family = "binomial", type.measure = "auc", alpha = 0)
+  binom <- glm(mental ~ ., data = data.training, family = "binomial")
+  step <- stepAIC(binom, direction= "both", trace = FALSE)
+  model.AIC <- glm(step$formula, family = "binomial", 
+                 data = ment)
+  #predictions
+  preds.test.lasso <-  as.numeric(predict(cv.lasso, newx = x.test, type = "class"))
+  preds.test.ridge <- as.numeric(predict(cv.ridge, newx = x.test, type = "class"))
+  indexes <-  which(ment$fold == i)
+  ors.test.aic <- predict(model.AIC, newx = subset(data.test, select = -mental), type = "response")[indexes]
+  preds.test.aic <- ifelse(ors.test.aic < .5,
+                           yes = 0, no = 1)
+  #area under the curve
+  auc.test.lasso[i] <- auc(roc(predictor = preds.test.lasso, response = data.test$mental))
+  auc.test.ridge[i] <- auc(roc(predictor = preds.test.ridge, response = data.test$mental))
+  auc.test.aic[i] <- auc(roc(predictor = preds.test.aic, response = data.test$mental))
+
+}
+
+mean.auc.lasso <- mean(auc.test.lasso)
+mean.auc.ridge <- mean(auc.test.ridge)
+mean.auc.aic <- mean(auc.test.aic)
+```
+
+
+```{r, echo='FALSE', results = 'asis'}
+compare <- data.frame(Mean.AUC = c(mean.auc.lasso, mean.auc.ridge, mean.auc.aic))
+rownames(compare) <- c("LASSO", "Ridge Regression", "Step AIC")
+xtable(compare)
+```
+
+As can be seen in the table above, the stepAIC method has the highest area under the curve across the 10 simulations. This is fairly surprising because stepwise regressions have been proven problematic in many ways suach as having highly biased parameter estimates and $R^2$ values. 
+
+Evenso, we will continue and this model will be used to simulate additional mental health outcomes.  
+
+
+##Step 2  Simulation Study
+
+New outcomes for out response variable `mental` will be calculated using the model selected by the stepwise procedure explained in step 1. This specification is written below.  
+
+The stepwise AIC model:  
+$mental = 0.651 - 0.0002*state - 0.136*sleep + 0.461*sex - 0.023*employ - 0.369*actlimit - 0.012*metro - 0.122*exer30 + 0.010*race - 0.130*income + 0.033*smoker + 0.545*binge$
+
+
+I'll then run the three model selection algorithms on these new simulated data and compare the AUCs for each set of model specifications. I have run this so far with 4 simulations but am having some trouble adding enough variation in the data to see substantial changes in the AUCs between the true and simulated data. 
+
+```{r}
+simulated <- mutate(ment, index = 1:nrow(ment))
+simulated <- subset(simulated, select = - c(mental, index))
+
+auc10_lasso <- c()
+auc10_ridge <- c()
+auc10_aic <- c()
+for (i in 1:10){
+  data <- sample(simulated, size = 1000)
+  #index <- data$index
+  data <- mutate(data, 
+                 mental = as.factor(ifelse(predict(model.AIC, newx = data, type = "response")[orig.id]< .5, yes = 0, no = 1)))
+  
+  x <- subset(x = data, select = -c(mental, orig.id, index))
+  #x <- mutate(x, fold = rep(1:10, 10))
+  x <- data.matrix(x)
+  y <- data.matrix(data$mental)
+  
+  fit.lasso <- cv.glmnet(x, as.factor(y), family = "binomial", type.measure = "auc", alpha = 1)
+  fit.ridge <- cv.glmnet(x, y, family = "binomial", type.measure = "auc", alpha = 0)
+  binom <- glm(mental ~ ., data = data, family = "binomial")
+  step <- stepAIC(binom, direction= "both", trace = FALSE)
+  model.AIC <- glm(step$formula, family = "binomial", 
+                 data = data)
+  trial <- mutate(data,
+                  y.lasso = as.numeric(predict(fit.lasso, newx = x, type = "class")), 
+                  y.ridge = as.numeric(predict(fit.ridge, newx = x, type = "class")), 
+                  y.aic = ifelse(predict(model.AIC, newx = x, type = "response") < .5, 
+                                         yes = 0, no = 1))
+  auc10_lasso[i] <- auc(roc(predictor = trial$y.lasso, response = data$mental))
+  auc10_ridge[i] <- auc(roc(predictor = trial$y.ridge, response = data$mental))
+  auc10_aic[i] <- auc(roc(predictor = trial$y.aic, response = data$mental))
+}
+
+```
