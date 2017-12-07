@@ -11,8 +11,8 @@ require(glmnet)
 require(MASS)
 require(pROC)
 require(mosaic)
-load("completeimputed.Rda")
-ment <- compdat[complete.cases(compdat),] 
+load("completeimputed50.Rda")
+ment <- compdat50 
 options(xtable.comment = FALSE)
 ```
 
@@ -27,10 +27,20 @@ The first two methods we will use for model specification is Least Absolute Shri
 For ridge regression this can be written as: $\sum_{j=1}^p \beta^2_j < c$ with p = # of predictors and c a constant. For LASSO, this can be written as $\sum_{j=1}^p |\beta_j| < c$. Both methods were run on our data.  
 
 ```{r preparing_data, echo = FALSE, message = FALSE}
+ment$income <-  as.factor(ment$income)
+ment$state <-  as.factor(ment$state)
+ment$metro <-  as.factor(ment$metro)
+ment$smoker <-  as.factor(ment$smoker)
+ment$employ <-  as.factor(ment$employ)
+ment$trans <-  as.factor(ment$trans)
+ment$actlimit <-  as.factor(ment$actlimit)
+ment$sexorient <- as.factor(ment$sexorient)
+ment$race <- as.factor(ment$race)
+
 require(xtable)
 x <- subset(x = ment, select = -mental)
-x<-as.matrix(x)
-y<-as.matrix(ment$mental)
+x<-data.matrix(x)
+y<-data.matrix(ment$mental)
 
 
 #LASSO
@@ -47,7 +57,6 @@ cv.lasso <- cv.glmnet(x, y, family = "binomial", type.measure = "auc", alpha = 1
 ridge <- glmnet(x, y, family = "binomial", alpha=0)
 #plot.ridge <- plot(ridge, xvar = "dev", main = "Ridge Regression")
 
-
 cv.ridge <- cv.glmnet(x, y, family = "binomial", type.measure = "auc", alpha = 0)
 #plot(cv.ridge)
 #coef(cv.ridge)
@@ -56,8 +65,7 @@ cv.ridge <- cv.glmnet(x, y, family = "binomial", type.measure = "auc", alpha = 0
 ment <- mutate(ment, mental = as.factor(mental))
 binom <- glm(mental ~ ., data = ment, family = "binomial")
 step <- stepAIC(binom, direction= "both", trace = FALSE)
-model.AIC <- glm(mental ~ state + sleep + sex + employ + actlimit + 
-                   metro + exer30 + race + income + smoker + binge, family = "binomial", 
+model.AIC <- glm(step$formula, family = "binomial", 
                  data = ment)
 par(mfrow = c(1, 2))
 plot(lasso, xvar = "dev", main = "LASSO Regression")
@@ -69,9 +77,21 @@ As shown in the plots above, the LASSO method shrinks some of the variables' coe
 The final selection algorithm we will use is stepwise regression. This method begins with a set of candidate predictors and adds and removes them based on improving the model's AIC. This is implemented on our data in both the forward and backward directions.  
 
 ```{r, echo = FALSE, results='asis'}
-coefficients <- data.frame(LASSO = as.vector(coef(cv.lasso)), 
-                           Ridge = as.vector(coef(cv.ridge)),
-                           AIC = rep(0, 16))
+lasso.coef <- as.data.frame(as.matrix(coefficients(cv.lasso)))
+colnames(lasso.coef) <- "LASSO"
+lasso.coef <- mutate(lasso.coef, variable = rownames(lasso.coef))
+
+ridge.coef <- as.data.frame(as.matrix(coefficients(cv.ridge)))
+colnames(ridge.coef) <- "Ridge"
+ridge.coef <- mutate(ridge.coef, variable = rownames(ridge.coef))
+
+aic.coef <- as.data.frame(summary(model.AIC)$coefficients[,"Estimate"])
+colnames(aic.coef) <- "Stepwise"
+aic.coef <- mutate(aic.coef, variable = rownames(aic.coef))
+
+coefficients <- merge(aic.coef, lasso.coef, by= "variable", all = TRUE)
+coefficients <- merge(coefficients, ridge.coef, by = "variable", all = TRUE)
+
 rownames(coefficients) <- c("(Intercept)", "state", "sleep", "sex", "employ", "sexorient", "trans",
                                         "actlimit", "metro", "exer30", "race", "bmi", "income",
                                         "smoker", "binge", "male")
@@ -88,6 +108,49 @@ rownames(coefficients) <- c("(Intercept)", "state", "sleep", "sex", "employ", "s
 print(xtable(coefficients, caption = "Selection Method Coefficients"))
 ```
 
+```{r validation}
+folds <- rep(1:10, each = 48630)
+folds <- c(folds, 1:3)
+folds <- sample(folds)
+ment <- mutate(ment, fold = folds)
+
+auc.test.lasso <- c()
+auc.test.ridge <- c()
+auc.test.aic <- c()
+for (i in 1:10){
+  data.training <- filter(ment, fold != i)
+  data.test <- filter(ment, fold == i)
+  x.training <- subset(x = data.training, select = -mental)
+  x.training <- data.matrix(x.training)
+  y.training <- data.matrix(data.training$mental)
+  x.test <- subset(x = data.test, select = -mental)
+  x.test <- data.matrix(x.test)
+  y.test <- data.matrix(data.test$mental)
+  #the models 
+  cv.lasso <- cv.glmnet(x.training, y.training, family = "binomial", type.measure = "auc", alpha = 1)
+  cv.ridge <- cv.glmnet(x.training, y.training, family = "binomial", type.measure = "auc", alpha = 0)
+  binom <- glm(mental ~ ., data = data.training, family = "binomial")
+  step <- stepAIC(binom, direction= "both", trace = FALSE)
+  model.AIC <- glm(step$formula, family = "binomial", 
+                 data = ment)
+  #predictions
+  preds.test.lasso <-  as.numeric(predict(cv.lasso, newx = x.test, type = "class"))
+  preds.test.ridge <- as.numeric(predict(cv.ridge, newx = x.test, type = "class"))
+  indexes <-  which(ment$fold == i)
+  ors.test.aic <- predict(model.AIC, newx = subset(data.test, select = -mental), type = "response")[indexes]
+  preds.test.aic <- ifelse(ors.test.aic < .5,
+                           yes = 0, no = 1)
+  #area under the curve
+  auc.test.lasso[i] <- auc(roc(predictor = preds.test.lasso, response = data.test$mental))
+  auc.test.ridge[i] <- auc(roc(predictor = preds.test.ridge, response = data.test$mental))
+  auc.test.aic[i] <- auc(roc(predictor = preds.test.aic, response = data.test$mental))
+
+}
+
+mean.auc.lasso <- mean(auc.test.lasso)
+mean.auc.ridge <- mean(auc.test.ridge)
+mean.auc.aic <- mean(auc.test.aic)
+```
 
 
 ```{r predictions, echo =FALSE}
