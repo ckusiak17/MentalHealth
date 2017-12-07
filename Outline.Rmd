@@ -116,6 +116,8 @@ save(compdat50, file="completeimputed50.Rda")
 library(mice)
 library(VIM)
 library(xtable)
+load("imputedsets.Rda")
+load("completeimputed.Rda")
 ##Complete Case Model##
 fit.cc<-glm(formula=mental~state + sleep + male + employ + actlimit + metro + exer30 + race + income + smoker + binge, family="binomial", data=mhfp)
 #str(imputedat$imp$sexorient)
@@ -134,6 +136,8 @@ print(xtable(summary(comb.test)[,c("est","se","fmi")]))
 library(mice)
 library(VIM)
 library(xtable)
+load("imputedsets50.Rda")
+load("completeimputed50.Rda")
 str(imputedat$imp$sexorient)
 completedatfit50 = complete(imputedat50, action="long") 
 head(completedatfit50)
@@ -144,19 +148,41 @@ comb.test50 = pool(mi.fit50)
 ##Summary Table##
 print(xtable(summary(comb.test50)[,c("est","se","fmi")]))
 ```
+##Validity Study##
+```{r}
+require(mosaic)
+set.seed(500)
+val<-mhfp[complete.cases(mhfp),]
+val2<-val[sample(nrow(val), 20876),]
+
+set.seed(500)
+random<-sample(0:1, size=20876, replace=TRUE)
+randodat<-val2
+randodat<-mutate(randodat, mental=ifelse(random==1, NA, mental))
+
+
+
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
 
 ##Parsimonious Model:##
 $$Pr(Y_{mental}=1|0) = \beta_{state}X_{1} + \beta_{sleep}X_{2} + \beta_{male}X_{3} + \beta_{employ}X_{4} + \beta_{actlimit}X_{5} + \beta_{metro}X_{6} + \beta_{exer30}X_{7} + \beta_{race}X_{8} + \beta_{income}X_{9} + \beta_{smoker}X_{10} + \beta_{binge}X_{11}$$
 $$ Y|\pi \sim Binomial(n, \pi) $$
 $$E(Y|\pi) = n\pi$$
 $$V(Y|\pi)= n\pi(1-\pi)$$
-
-
-
-
-
-
-
 #The Data
 
 -A subset of BRFSS data
