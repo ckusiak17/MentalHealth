@@ -145,7 +145,7 @@ for (i in 1:10){
 mean.auc.lasso <- mean(auc.test.lasso)
 mean.auc.ridge <- mean(auc.test.ridge)
 mean.auc.aic <- mean(auc.test.aic)
-save(auc.test.lasso, auc.test.ridge, auc.test.aic, file = "try2_validation_aucs.Rda")
+save(coefficients, auc.test.lasso, auc.test.ridge, auc.test.aic, file = "try3_validation_aucs.Rda")
 ```
 
 
@@ -206,7 +206,7 @@ for (i in 1:10){
   auc10_aic[i] <- auc(roc(predictor = trial$y.aic, response = data$mental))
 }
 
-save(auc10_lasso, auc10_ridge, auc10_aic, file = "try2_performance_aucs.Rda")
+save(auc10_lasso, auc10_ridge, auc10_aic, file = "try3_performance_aucs.Rda")
 ```
 
 
@@ -243,5 +243,5 @@ for (i in 1:10){
   auc1000_aic[i] <- auc(roc(predictor = trial$y.aic, response = data$mental))
 }
 
-save(auc1000_lasso, auc1000_ridge, auc1000_aic, file = "try2_performance_aucs_bigger.Rda")
+save(auc1000_lasso, auc1000_ridge, auc1000_aic, file = "try3_performance_aucs_bigger.Rda")
 ```
