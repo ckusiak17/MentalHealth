@@ -243,5 +243,5 @@ for (i in 1:10){
   auc1000_aic[i] <- auc(roc(predictor = trial$y.aic, response = data$mental))
 }
 
-save(auc10_lasso, auc10_ridge, auc10_aic, file = "try2_performance_aucs_bigger.Rda")
+save(auc1000_lasso, auc1000_ridge, auc1000_aic, file = "try2_performance_aucs_bigger.Rda")
 ```
