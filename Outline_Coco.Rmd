@@ -167,7 +167,7 @@ preds.AIC <- ifelse(or.AIC < .5, yes = 0, no = 1)
 The selection algorithms seem to yield fairly similar results. For example, `trans` is weighted very little across the three models and `binge` has a lot of weight across the three. The stepwise and LASSO yield the same bumber of predictors.
 
 
-Now, to test the performance of each model, we will calculate the Root Mean Squared Error and Area Under the Curve (from ROC) for each.
+Now, to test the performance of each model, we will run a 10-fold cross validation with the three models specified above.
 
 ```{r comparisons, echo = FALSE, results = 'asis'}
 #Model Comparisons
@@ -183,38 +183,36 @@ rmse.aic <- rmse(truths = y, predictions = ment$y.aic)
 #rmse.ridge
 #rmse.aic
 
-roc.lasso <- roc(predictor = ment$y.lasso, response = ment$mental)
-roc.ridge <- roc(predictor = ment$y.ridge, response = ment$mental)
-roc.aic <- roc(predictor = ment$y.aic, response = ment$mental)
-auc.lasso <- auc(roc.lasso)
-auc.ridge <- auc(roc.ridge)
-auc.aic <- auc(roc.aic)
+#roc.lasso <- roc(predictor = ment$y.lasso, response = ment$mental)
+#roc.ridge <- roc(predictor = ment$y.ridge, response = ment$mental)
+#roc.aic <- roc(predictor = ment$y.aic, response = ment$mental)
+#auc.lasso <- auc(roc.lasso)
+#auc.ridge <- auc(roc.ridge)
+#auc.aic <- auc(roc.aic)
 #paste0("Lasso has an AUC of ", round(auc.lasso,4))
 #paste0("Ridge has an AUC of ", round(auc.ridge, 4))
 #paste0("AIC has an AUC of ", round(auc.aic, 4))
-compare <- data.frame(Algorithm = c("LASSO", "Ridge Regression", "Step AIC"), 
-                      RMSE = round(c(rmse.lasso, rmse.ridge, rmse.aic), 4),
-                      AUC = round(c(auc.lasso, auc.ridge,auc.aic), 4))
+#compare <- data.frame(Algorithm = c("LASSO", "Ridge Regression", "Step AIC"), 
+#                      RMSE = round(c(rmse.lasso, rmse.ridge, rmse.aic), 4),
+#                      AUC = round(c(auc.lasso, auc.ridge,auc.aic), 4))
+
+compare <- data.frame(Mean.AUC = c(mean.auc.lasso, mean.auc.ridge, mean.auc.aic))
+rownames(compare) <- c("LASSO", "Ridge Regression", "Step AIC")
 xtable(compare)
 ```  
 
-As can be seen in the table above, the stepAIC method has the highest area under the curve and the lowest root mean squared error. This is fairly surprising because stepwise regressions have been proven problematic in many ways suach as having highly biased parameter estimates and $R^2$ values. 
+As can be seen in the table above, the stepAIC method has the highest area under the curve across the 10 simulations. This is fairly surprising because stepwise regressions have been proven problematic in many ways suach as having highly biased parameter estimates and $R^2$ values. 
 
 Evenso, we will continue and this model will be used to simulate additional mental health outcomes.  
 
 
 ##Step 2  Simulation Study
 
-I will add some additional variation to the `sleep`, `employ`, and `income` variables by adding random  noise to each observation. 
+```{r}
+load("imputedsets50.Rda")
+```
 
-For each simulation:
-$$sleep_{i,n} = sleep_{n} + norm_{i,n}$$ 
-$$employ_{i,n} = employ_{n} + unif_{i,n}$$
-$$income_{i,n} = income_{n} + unif_{i,n}$$
-with $norm_{i,n} \sim N(0,1)$ and $unif_{i,n} \sim Unif(-3,3)$ with $i = 1, ..., I =$ # of simulations and with $n = 1, ..., N =$ # of observations. 
-
-
-New outcomes for out response variable `mental` will be calculated using the model selected by the stepwise procedure explained in step 1. This speciication is written below.  
+New outcomes for out response variable `mental` will be calculated using the model selected by the stepwise procedure explained in step 1. This specification is written below.  
 
 The stepwise AIC model:  
 $mental = 0.651 - 0.0002*state - 0.136*sleep + 0.461*sex - 0.023*employ - 0.369*actlimit - 0.012*metro - 0.122*exer30 + 0.010*race - 0.130*income + 0.033*smoker + 0.545*binge$
@@ -314,6 +312,41 @@ w <- foreach (i = 1:4) %dopar% {
   c(auc_lasso, auc_ridge, auc_aic)
 }
 ```
+
+#Trial #2
+
+```{r}
+simulated <- mutate(ment, index = 1:nrow(ment))
+for (i in 1:10){
+  data <- sample(simulated, size = 100)
+  data <- subset(data, select = - mental)
+  index <- data$index
+  data <- mutate(data, 
+                 mental = ifelse(predict(model.AIC, newx = data, type = "response")[index] < .5, yes = 0, no = 1))
+  
+  x<- subset(x = data, select = -mental)
+  x <- data.matrix(x)
+  y <- data.matrix(data$mental)
+  
+  fit.lasso <- cv.glmnet(x, y, family = "binomial", type.measure = "auc", alpha = 1)
+  fit.ridge <- cv.glmnet(x, y, family = "binomial", type.measure = "auc", alpha = 0)
+  binom <- glm(mental ~ ., data = data, family = "binomial")
+  step <- stepAIC(binom, direction= "both", trace = FALSE)
+  model.AIC <- glm(step$formula, family = "binomial", 
+                 data = data)
+  trial <- mutate(data,
+                  y.lasso = as.numeric(predict(fit.lasso, newx = x, type = "class")), 
+                  y.ridge = as.numeric(predict(fit.ridge, newx = x, type = "class")), 
+                  y.aic = ifelse(predict(model.AIC, newx = x, type = "response") < .5, 
+                                         yes = 0, no = 1))
+  auc_lasso[i] <- auc(roc(predictor = trial$y.lasso, response = data$mental))
+  auc_ridge[i] <- auc(roc(predictor = trial$y.ridge, response = data$mental))
+  auc_aic[i] <- auc(roc(predictor = trial$y.aic, response = data$mental))
+}
+
+```
+
+
 
 #Conclusions  
 
