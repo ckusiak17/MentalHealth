@@ -159,18 +159,69 @@ set.seed(500)
 random<-sample(0:1, size=20876, replace=TRUE)
 randodat<-val2
 randodat<-mutate(randodat, mental=ifelse(random==1, NA, mental))
+randodat<-mutate(randodat, metro=ifelse(random==1, NA, metro))
+randodat<-mutate(randodat, sleep=ifelse(random==1, NA, sleep))
 
+library(mice)
+library(VIM)
+md.pattern(randodat)
+miplot2<-aggr(randodat, col=c('red','blue'),
+                    numbers=TRUE, sortVars=TRUE,
+                    labels=names(mhfp), cex.axis=.7,
+                    gap=3, ylab=c("Missing data","Pattern"))
 
+##20 iterations##
+imputedatval<-mice(randodat, m=10, maxit = 20, method = 'sample', seed = 500, print=FALSE)
+summary(imputedatval)
+compdatval<-complete(imputedatval,2)
+save(imputedatval, file = "imputedsetsval.Rda")
+save(compdatval, file = "completeimputedval.Rda")
 
-
-
-
-
-
-
-
+##50 iterations##
+imputedat50val<-mice(randodat, m=10, maxit = 50, method = 'sample', seed = 500, print=FALSE)
+summary(imputedat50val)
+compdat50val<-complete(imputedat50val,2)
+save(imputedat50val, file = "imputedsets50val.Rda")
+save(compdat50val, file="completeimputed50val.Rda")
 ```
 
+##Code used from Ken Kleinmann lectures##
+```{r}  
+library(mice)
+library(VIM)
+library(xtable)
+load("imputedsetsval.Rda")
+load("completeimputedval.Rda")
+##Complete Case Model##
+fit.ccval<-glm(formula=mental~state + sleep + male + employ + actlimit + metro + exer30 + race + income + smoker + binge, family="binomial", data=randodat)
+#str(imputedat$imp$sexorient)
+completedatfitval = complete(imputedatval, action="long") 
+head(completedatfitval)
+##Pooled Imputed Model##
+mi.fitval=glm.mids(mental~state + sleep + male + employ + actlimit + metro + exer30 + race + income + smoker + binge, family="binomial", data=imputedatval)
+head(summary(mi.fitval))
+comb.test = pool(mi.fitval)
+##Summary Table##
+print(xtable(summary(comb.test)[,c("est","se","fmi")]))
+```
+
+```{r}
+##Code used from Ken Kleinmann lectures##
+library(mice)
+library(VIM)
+library(xtable)
+load("imputedsets50val.Rda")
+load("completeimputed50val.Rda")
+str(imputedatval$imp$sexorient)
+completedatfit50val = complete(imputedat50val, action="long") 
+head(completedatfit50val)
+##Pooled Imputed Model##
+mi.fit50val=glm.mids(mental~state + sleep + male + employ + actlimit + metro + exer30 + race + income + smoker + binge, family="binomial", data=imputedat50val)
+head(summary(mi.fit50val))
+comb.test50val = pool(mi.fit50val)
+##Summary Table##
+print(xtable(summary(comb.test50val)[,c("est","se","fmi")]))
+```
 
 
 
