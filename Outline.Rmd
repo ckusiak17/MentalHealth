@@ -200,9 +200,9 @@ head(completedatfitval)
 ##Pooled Imputed Model##
 mi.fitval=glm.mids(mental~state + sleep + male + employ + actlimit + metro + exer30 + race + income + smoker + binge, family="binomial", data=imputedatval)
 head(summary(mi.fitval))
-comb.test = pool(mi.fitval)
+comb.testval = pool(mi.fitval)
 ##Summary Table##
-print(xtable(summary(comb.test)[,c("est","se","fmi")]))
+print(xtable(summary(comb.testval)[,c("est","se","fmi")]))
 ```
 
 ```{r}
@@ -212,7 +212,7 @@ library(VIM)
 library(xtable)
 load("imputedsets50val.Rda")
 load("completeimputed50val.Rda")
-str(imputedatval$imp$sexorient)
+str(imputedat50val$imp$sexorient)
 completedatfit50val = complete(imputedat50val, action="long") 
 head(completedatfit50val)
 ##Pooled Imputed Model##
@@ -222,11 +222,6 @@ comb.test50val = pool(mi.fit50val)
 ##Summary Table##
 print(xtable(summary(comb.test50val)[,c("est","se","fmi")]))
 ```
-
-
-
-
-
 
 
 ##Parsimonious Model:##
