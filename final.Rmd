@@ -1,0 +1,85 @@
+---
+title: "CDA Final Project"
+author: "Joshua Freeman, Coco Kusiak, and Luke Toomey"
+date: "12/12/2017"
+toc: TRUE
+toc_depth: 2
+number_sections: TRUE
+bibliography: bibliography.bib
+output: pdf_document
+---
+
+\newpage
+
+#Introduction    
+
+##Motivation  
+
+Depression and anxiety disorders are the most common mental illnesses in the United States [@ada]. Without proper treatment, these conditions can become chronic diseases and lead to increased risk for mortality [@cdc]. Although many treatments are available for these conditions unfortunately, only about 37% of those with anxiety seek treatment [-@ada]. Having just one depressive episode leaves the afflicted person with a 50% of experiencing another [-@cdc]. We set out to see what is predictive of having poor mental health in the average American.  
+
+
+
+##The Data  
+
+```{r cleaning_data, echo=FALSE, message = FALSE}
+require(mosaic)
+load("mhfp2.Rda")
+mhfp<-bstat743fp
+mhfp <- plyr :: rename(mhfp, c("SLEPTIM1"="sleep", "MENTHLTH"="mental", "SEX" = "sex", "EMPLOY1"="employ", "SXORIENT"="sexorient",
+                       "TRNSGNDR"="trans", "QLACTLM2"="actlimit", "MSCODE"="metro", "_TOTINDA"="exer30", 
+                       "_RACE_G1"="race", "_RFBMI5"="bmi",  "_INCOMG"="income", "_SMOKER3"="smoker",
+                       "_RFBING5"="binge", "_LLCPWT"="weight"))
+mhfp <- mutate(mhfp, male = ifelse(sex == 1, yes = 1, no = ifelse(sex == 2, yes = 0, no = NA)),
+               mental = ifelse(mental == 88, yes = 0, no = ifelse(mental %in% c(77, 99), yes = NA, no = 1)),
+               sleep = ifelse(sleep == 99 | sleep == 77, yes = NA, no = sleep),
+               sexorient = ifelse(sexorient == 1, yes = "straight", 
+                                  no = ifelse(sexorient == 2, yes = "gay", 
+                                              no = ifelse(sexorient == 3, "bisexual", 
+                                                          no = ifelse(sexorient == 4, yes = "other", no = NA)))),
+               exer30 = ifelse(exer30 == 1, yes = 1, 
+                               no = ifelse(exer30 == 2, yes = 0, no =NA)),
+               trans = ifelse(trans %in% c(1, 2, 3), yes = 1, 
+                              no = ifelse(trans == 4, yes = 0, no = NA)),
+               smoker = ifelse(smoker %in% c(1, 2), yes = 1, 
+                               no = ifelse(smoker == 3, yes = 2, 
+                                           no = ifelse(smoker == 4, yes = 0, no =NA))),
+               income = ifelse(income == 9, yes = NA, no = income),
+               actlimit = ifelse(actlimit %in% c(7, 9 ), yes = NA, no = actlimit),
+               employ = ifelse(employ == 9, yes = NA, no = employ),
+               bmi = ifelse(bmi == 1, yes = 0, no = ifelse(bmi == 2, yes = 1, no = NA)),
+               binge = ifelse(binge == 1, yes = 0, no = ifelse(binge == 2, yes = 1, no =NA))
+)
+mhfp<-subset(mhfp, select=-sex)
+
+mhfp$income <-  as.factor(mhfp$income)
+mhfp$metro <-  as.factor(mhfp$metro)
+mhfp$smoker <-  as.factor(mhfp$smoker)
+mhfp$employ <-  as.factor(mhfp$employ)
+mhfp$trans <-  as.factor(mhfp$trans)
+mhfp$actlimit <-  as.factor(mhfp$actlimit)
+mhfp$sexorient <- as.factor(mhfp$sexorient)
+mhfp$race <- as.factor(mhfp$race)
+
+#save(mhfp, file = "mental_final.Rda")
+```
+
+
+##Results
+
+\newpage
+
+#Missing Data  
+Joshua Freeman
+
+\pagebreak
+
+#Model Selection Methods  
+Coco Kusiak
+
+\newpage
+
+#Random Effect Models 
+Luke Toomey
+
+
+# References
