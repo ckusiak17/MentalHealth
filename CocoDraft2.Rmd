@@ -96,6 +96,15 @@ coefficients <- merge(aic.coef, lasso.coef, by= "variable", all = TRUE)
 coefficients <- merge(coefficients, ridge.coef, by = "variable", all = TRUE)
 
 xtable(coefficients)
+
+toshow <- filter(coefficients, variable %in% 
+                   c("male", "binge", "bmi", "exer30", "smoker", "smoker1", "smoker2"))
+toshow[5,2] <- 0
+toshow[6:7, 3:4] <- 0
+showing <- round(toshow[,2:4], 3)
+rownames(showing) <- c("male", "binge", "bmi", "exer30", "smoker", "smoker1", "smoker2")
+showing
+xtable(showing)
 ```
 
 The selection algorithms seem to yield fairly similar results. For example, `trans` is weighted very little across the three models and `binge` has a lot of weight across the three. The stepwise and LASSO yield the same bumber of predictors.
@@ -112,6 +121,7 @@ ment <- mutate(ment, fold = folds)
 auc.test.lasso <- c()
 auc.test.ridge <- c()
 auc.test.aic <- c()
+auc.test.aic2 <- c()
 for (i in 1:10){
   data.training <- filter(ment, fold != i)
   data.test <- filter(ment, fold == i)
@@ -135,16 +145,19 @@ for (i in 1:10){
   ors.test.aic <- predict(model.AIC, newx = subset(data.test, select = -mental), type = "response")[indexes]
   preds.test.aic <- ifelse(ors.test.aic < .5,
                            yes = 0, no = 1)
+  preds.test.aic2 <- rbinom(n = length(preds.test.aic), size = 1, prob = ors.test.aic)
   #area under the curve
   auc.test.lasso[i] <- auc(roc(predictor = preds.test.lasso, response = data.test$mental))
   auc.test.ridge[i] <- auc(roc(predictor = preds.test.ridge, response = data.test$mental))
   auc.test.aic[i] <- auc(roc(predictor = preds.test.aic, response = data.test$mental))
+  auc.test.aic2[i] <- auc(roc(predictor = preds.test.aic2, response = data.test$mental))
 
 }
 
 mean.auc.lasso <- mean(auc.test.lasso)
 mean.auc.ridge <- mean(auc.test.ridge)
 mean.auc.aic <- mean(auc.test.aic)
+mean.auc.aic2 <- mean(auc.test.aic2)
 save(coefficients, auc.test.lasso, auc.test.ridge, auc.test.aic, file = "try3_validation_aucs.Rda")
 ```
 
@@ -177,8 +190,9 @@ simulated <- subset(simulated, select = - c(mental))
 auc10_lasso <- c()
 auc10_ridge <- c()
 auc10_aic <- c()
+auc10_aic2 <- c()
 
-for (i in 1:10){
+for (i in 1:100){
   data <- sample(simulated, size = 10000)
   index <- data$index
   ors <- predict(model.AIC, newx = data, type = "response")[index] 
@@ -200,10 +214,13 @@ for (i in 1:10){
                   y.lasso = as.numeric(predict(fit.lasso, newx = x, type = "class")), 
                   y.ridge = as.numeric(predict(fit.ridge, newx = x, type = "class")), 
                   y.aic = ifelse(predict(fit.AIC, newx = x, type = "response") < .5, 
-                                         yes = 0, no = 1))
+                                         yes = 0, no = 1),
+                  y.aic2 = as.numeric(rbinom(n = nrow(data), size = 1, 
+                                            prob = predict(fit.AIC, newx = x, type = "response"))))
   auc10_lasso[i] <- auc(roc(predictor = trial$y.lasso, response = data$mental))
   auc10_ridge[i] <- auc(roc(predictor = trial$y.ridge, response = data$mental))
   auc10_aic[i] <- auc(roc(predictor = trial$y.aic, response = data$mental))
+  auc10_aic2[i] <- auc(roc(predictor = trial$y.aic2, response = data$mental))
 }
 
 save(auc10_lasso, auc10_ridge, auc10_aic, file = "try3_performance_aucs.Rda")
@@ -214,8 +231,9 @@ save(auc10_lasso, auc10_ridge, auc10_aic, file = "try3_performance_aucs.Rda")
 auc1000_lasso <- c()
 auc1000_ridge <- c()
 auc1000_aic <- c()
+auc1000_aic2 <- c()
 
-for (i in 1:10){
+for (i in 1:100){
   data <- sample(simulated, size = 100000)
   index <- data$index
   ors <- predict(model.AIC, newx = data, type = "response")[index] 
@@ -237,11 +255,27 @@ for (i in 1:10){
                   y.lasso = as.numeric(predict(fit.lasso, newx = x, type = "class")), 
                   y.ridge = as.numeric(predict(fit.ridge, newx = x, type = "class")), 
                   y.aic = ifelse(predict(fit.AIC, newx = x, type = "response") < .5, 
-                                         yes = 0, no = 1))
+                                         yes = 0, no = 1),
+                  y.aic2 = as.numeric(rbinom(n = nrow(data), size = 1, 
+                                            prob = predict(fit.AIC, newx = x, type = "response"))))
   auc1000_lasso[i] <- auc(roc(predictor = trial$y.lasso, response = data$mental))
   auc1000_ridge[i] <- auc(roc(predictor = trial$y.ridge, response = data$mental))
   auc1000_aic[i] <- auc(roc(predictor = trial$y.aic, response = data$mental))
+  auc1000_aic2[i] <- auc(roc(predictor = trial$y.aic2, response = data$mental))
 }
+save(auc.test.aic, auc.test.lasso, auc.test.ridge, auc10_ridge, auc10_aic, auc10_lasso, 
+     auc1000_aic, auc1000_lasso, auc1000_ridge, coefficients, lasso, ridge, file = "coco.Rda")
 
 save(auc1000_lasso, auc1000_ridge, auc1000_aic, file = "try3_performance_aucs_bigger.Rda")
 ```
+
+
+```{r}
+compare.sim <- data.frame(Method = c("LASSO", "Ridge", "Stepwise"),
+                          `Mean 10,000` = c(mean(auc10_lasso), mean(auc10_ridge1), mean(auc10_aic)),
+                          `SD 10,000` = c(sd(auc10_lasso), sd(auc10_ridge1), sd(auc10_aic)),
+                          `Mean 100,000` = c(mean(auc1000_lasso), mean(auc1000_ridge), mean(auc1000_aic)),
+                          `SD 100,000` = c(sd(auc1000_lasso), sd(auc1000_ridge), sd(auc1000_aic)))
+compare.sim
+```
+
