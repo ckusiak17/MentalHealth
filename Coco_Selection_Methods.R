@@ -63,12 +63,6 @@ coefficients <- merge(aic.coef, lasso.coef, by= "variable", all = TRUE)
 coefficients <- merge(coefficients, ridge.coef, by = "variable", all = TRUE)
 
 
-toshow <- filter(coefficients, variable %in% 
-                   c("male", "binge", "bmi", "exer30", "smoker", "smoker1", "smoker2"))
-toshow[5,2] <- 0
-toshow[6:7, 3:4] <- 0
-showing <- round(toshow[,2:4], 3)
-rownames(showing) <- c("male", "binge", "bmi", "exer30", "smoker", "smoker1", "smoker2")
 
 
 
@@ -130,7 +124,7 @@ auc10_ridge <- c()
 auc10_aic <- c()
 auc10_aic2 <- c()
 
-for (i in 1:100){
+for (i in 1:10){
   data <- sample(simulated, size = 10000)
   index <- data$index
   ors <- predict(model.AIC, newx = data, type = "response")[index] 
@@ -179,6 +173,43 @@ for (i in 1:100){
   x <- data.matrix(x)
   y <- data.matrix(data$mental)
 
+  fit.lasso <- cv.glmnet(x, as.factor(y), family = "binomial", type.measure = "auc", alpha = 1)
+  fit.ridge <- cv.glmnet(x, y, family = "binomial", type.measure = "auc", alpha = 0)
+  binom <- glm(mental ~ ., data = subset(data, select = - c(orig.id, index)), family = "binomial")
+  step <- stepAIC(binom, direction= "both", trace = FALSE)
+  fit.AIC <- glm(step$formula, family = "binomial", 
+                 data = data)
+  trial <- mutate(data,
+                  y.lasso = as.numeric(predict(fit.lasso, newx = x, type = "class")), 
+                  y.ridge = as.numeric(predict(fit.ridge, newx = x, type = "class")), 
+                  y.aic = ifelse(predict(fit.AIC, newx = x, type = "response") < .5, 
+                                 yes = 0, no = 1),
+                  y.aic2 = as.numeric(rbinom(n = nrow(data), size = 1,
+                                             prob = predict(fit.AIC, newx = x, type = "response"))))
+  auc1000_lasso[i] <- auc(roc(predictor = trial$y.lasso, response = data$mental))
+  auc1000_ridge[i] <- auc(roc(predictor = trial$y.ridge, response = data$mental))
+  auc1000_aic[i] <- auc(roc(predictor = trial$y.aic, response = data$mental))
+  auc1000_aic2[i] <- auc(roc(predictor = trial$y.aic2, response = data$mental))
+}
+
+
+auc1000_lasso <- c()
+auc1000_ridge <- c()
+auc1000_aic <- c()
+auc1000_aic2 <- c()
+
+for (i in 1:10){
+  data <- sample(simulated, size = 200000)
+  index <- data$index
+  ors <- predict(model.AIC, newx = data, type = "response")[index] 
+  data <- mutate(data, 
+                 mental = as.factor(rbinom(n = nrow(data), size = 1, prob = ors)))
+  
+  x <- subset(x = data, select = -c(mental, orig.id, index))
+  
+  x <- data.matrix(x)
+  y <- data.matrix(data$mental)
+  
   fit.lasso <- cv.glmnet(x, as.factor(y), family = "binomial", type.measure = "auc", alpha = 1)
   fit.ridge <- cv.glmnet(x, y, family = "binomial", type.measure = "auc", alpha = 0)
   binom <- glm(mental ~ ., data = subset(data, select = - c(orig.id, index)), family = "binomial")
