@@ -5,7 +5,7 @@ require(pROC)
 require(mosaic)
 load("completeimputed50.Rda")
 ment <- compdat50 
-options(xtable.comment = FALSE)
+
 
 ment$income <-  as.factor(ment$income)
 ment$state <-  as.factor(ment$state)
@@ -17,7 +17,6 @@ ment$actlimit <-  as.factor(ment$actlimit)
 ment$sexorient <- as.factor(ment$sexorient)
 ment$race <- as.factor(ment$race)
 
-require(xtable)
 x <- subset(x = ment, select = -mental)
 x<-data.matrix(x)
 y<-data.matrix(ment$mental)
@@ -121,7 +120,7 @@ mean.auc.aic2 <- mean(auc.test.aic2)
 
 compare <- data.frame(Mean.AUC = c(mean.auc.lasso, mean.auc.ridge, mean.auc.aic))
 rownames(compare) <- c("LASSO", "Ridge Regression", "Step AIC")
-xtable(compare)
+
 
 simulated <- mutate(ment, index = 1:nrow(ment))
 simulated <- subset(simulated, select = - c(mental))
