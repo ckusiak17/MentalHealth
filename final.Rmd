@@ -69,17 +69,79 @@ mhfp$race <- as.factor(mhfp$race)
 \newpage
 
 #Missing Data  
-Joshua Freeman
 
 \pagebreak
 
-#Model Selection Methods  
-Coco Kusiak
+#Automatic Model Selection Methods  
+
+##Introduction  
+
+The goal of my project is to test the performance of the different model selection algorithms ridge, LASSO, and stepwise regressions. LASSO and Ridge regressions are both forms of coefficient regularization. In addition to minimizing the residual sums of squares, these methods penalize covariates in our model based on some constraints. For ridge regression this can be written as: $\sum_{j=1}^p \beta^2_j < c$ with p = # of predictors and c a constant. For LASSO, this can be written as $\sum_{j=1}^p |\beta_j| < c$ [@stanford]. The important distinction between these two methods is that the LASSO method acutally drops predictors out of the model while the ridge method only shrinks coefficients close to 0.   
+
+Stepwise regression adds or removes variables based on which improves the model's AIC. Forward selection begins with no predictors and tests which one additional variable will improve the model. This continues until AIC improvements stop. Backwards selection begins with all available predictors and removes them one-by-one until AIC improvements stop [@ncss]. For the purpose of this study, we will focus on a combination of both forward and backward selection.     
+
+```{r, include=FALSE, message=FALSE}
+require(glmnet)
+require(MASS)
+require(pROC)
+require(mosaic)
+require(xtable)
+options(xtable.comment = FALSE)
+```
+
+
+##Step 1: Performance Assessment Based on Observed Data  
+
+To begin, I fit these three algorithms on the full data.   
+
+```{r, echo=FALSE, fig.height=4}
+load("coco.Rda")
+
+par(mfrow = c(1, 2))
+plot(ridge, xvar = "dev", xlab = "Ridge Regression")
+plot(lasso, xvar = "dev", xlab = "LASSO Regression")
+title("Coefficient Shrinkage vs. Explained Deviance", outer=TRUE)
+```   
+
+The plot above show the coefficient shrinkage as a function of the model's fraction of explained deviance. Each curve represents a predictor. At the far right, all predictors are unpenalized. As you move to the left, the explained deviance decreases as the coefficients shrink closer to 0. The numbers along the upper x-axis represent the number of predictors remaining in the model. The Ridge model maintains all 14 variables even when the explained deviance is essentially zero. At this point in the LASSO plot, 0 predictors remain. The Ridge method shrinks coefficients very _close_ to 0, but the LASSO method drops some coefficients exactly to 0, removing them completely from the model. 
+
+```{r, echo=FALSE, results ='asis'}
+step1 <- filter(coefficients, variable %in% c("binge", "bmi", "exer30", "male", "sleep"))
+print(xtable(step1), caption = "Subset of Coefficient Estimates from Selection Algorithms",
+      caption.placement = "top")
+```  
+As shown on the previous page, most of the coefficient estimates are similar between the algorithms. However, for `bmi` stepwise and ridge estimate oppisite directions of association with the probability of having poor mental health, while the LASSO method drops it out of the model completely.  
+
+Next, I run 10-fold cross validation for each of these selection and the results are shown below. 
+
+```{r, echo = FALSE, results='asis'}
+compare <- data.frame(Mean.AUC = round(c(mean(auc.test.aic), mean(auc.test.lasso), 
+                                         mean(auc.test.ridge)), 3), 
+                      SD.AUC = c(round(sd(auc.test.aic), 5), round(sd(auc.test.lasso), 5),
+                                 round(sd(auc.test.ridge),5)))
+rownames(compare) <- c("Stepwise", "LASSO", "Ridge")
+print(xtable(compare), caption = "Mean Areas Under The Curve from Cross Validation",
+      caption.placement = 'top')
+```  
+As can be seen above, the stepwise method yields the highest area under the curve across the 10 iterations. This model will be used in subsequent analyses.  
+
+##Step 2: Simulation Study    
+
+The next step in this investigation is running a simulation study [@sim].
+
+
+
+##Conclusions  
+
+
+
+
+
 
 \newpage
 
 #Random Effect Models 
-Luke Toomey
+
 
 
 # References
