@@ -27,10 +27,11 @@ require(xtable)
 require(dplyr)
 load("mhfp2.Rda")
 mhfp<-bstat743fp
+mhfp<-mhfp[,-c(6)]
 mhfp <- plyr :: rename(mhfp, c("SLEPTIM1"="sleep", "MENTHLTH"="mental", "SEX" = "sex", "EMPLOY1"="employ", "SXORIENT"="sexorient",
                        "TRNSGNDR"="trans", "QLACTLM2"="actlimit", "MSCODE"="metro", "_TOTINDA"="exer30", 
                        "_RACE_G1"="race", "_RFBMI5"="bmi",  "_INCOMG"="income", "_SMOKER3"="smoker",
-                       "_RFBING5"="binge", "_LLCPWT"="weight"))
+                       "_RFBING5"="binge", "_LLCPWT"="weight", "_STATE"="state"))
 mhfp <- mutate(mhfp, male = ifelse(sex == 1, yes = 1, no = ifelse(sex == 2, yes = 0, no = NA)),
                mental = ifelse(mental == 88, yes = 0, no = ifelse(mental %in% c(77, 99), yes = NA, no = 1)),
                sleep = ifelse(sleep == 99 | sleep == 77, yes = NA, no = sleep),
@@ -146,43 +147,44 @@ xtable(x)
 ```
 
 
-```{r}  
+```{r, echo=FALSE, results='asis'}  
 library(mice)
 library(VIM)
 library(xtable)
 load("imputedsets.Rda")
 load("completeimputed.Rda")
-compdat$income<-as.factor(compdat$income)
-compdat$state<-as.factor(compdat$state)
-compdat$metro<-as.factor(compdat$metro)
-compdat$smoker<-as.factor(compdat$smoker)
-compdat$employ<-as.factor(compdat$employ)
-compdat$trans<-as.factor(compdat$trans)
-compdat$actlimit<-as.factor(compdat$actlimit)
-
-mhfp$income<-as.factor(mhfp$income)
-mhfp$state<-as.factor(mhfp$state)
-mhfp$metro<-as.factor(mhfp$metro)
-mhfp$smoker<-as.factor(mhfp$smoker)
-mhfp$employ<-as.factor(mhfp$employ)
-mhfp$trans<-as.factor(mhfp$trans)
-mhfp$actlimit<-as.factor(mhfp$actlimit)
+# compdat$income<-as.factor(compdat$income)
+# compdat$state<-as.factor(compdat$state)
+# compdat$metro<-as.factor(compdat$metro)
+# compdat$smoker<-as.factor(compdat$smoker)
+# compdat$employ<-as.factor(compdat$employ)
+# compdat$trans<-as.factor(compdat$trans)
+# compdat$actlimit<-as.factor(compdat$actlimit)
+# 
+# mhfp$income<-as.factor(mhfp$income)
+# mhfp$state<-as.factor(mhfp$state)
+# mhfp$metro<-as.factor(mhfp$metro)
+# mhfp$smoker<-as.factor(mhfp$smoker)
+# mhfp$employ<-as.factor(mhfp$employ)
+# mhfp$trans<-as.factor(mhfp$trans)
+# mhfp$actlimit<-as.factor(mhfp$actlimit)
 
 ##Complete Case Model##
 fit.cc<-glm(formula=mental~as.factor(state) + sleep + male + as.factor(employ) + actlimit + as.factor(metro) + exer30 + as.factor(race) + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=mhfp)
+summval<-summary(fit.cc)$coef[,c("Estimate","Std. Error")]
+summval<-summval[-c(2:19,22:28,34:37), ]
 print(xtable(summary(fit.cc)$coef[,c("Estimate","Std. Error")]))
 
 #str(imputedat$imp$sexorient)
-completedatfit = complete(imputedat, action="long") 
-completedatfit$income<-as.factor(completedatfit$income)
-completedatfit$state<-as.factor(completedatfit$state)
-completedatfit$metro<-as.factor(completedatfit$metro)
-completedatfit$smoker<-as.factor(completedatfit$smoker)
-completedatfit$employ<-as.factor(completedatfit$employ)
-completedatfit$trans<-as.factor(completedatfit$trans)
-completedatfit$actlimit<-as.factor(completedatfit$actlimit)
+# completedatfit = complete(imputedat, action="long") 
+# completedatfit$income<-as.factor(completedatfit$income)
+# completedatfit$state<-as.factor(completedatfit$state)
+# completedatfit$metro<-as.factor(completedatfit$metro)
+# completedatfit$smoker<-as.factor(completedatfit$smoker)
+# completedatfit$employ<-as.factor(completedatfit$employ)
+# completedatfit$trans<-as.factor(completedatfit$trans)
+# completedatfit$actlimit<-as.factor(completedatfit$actlimit)
 
-head(completedatfit)
 ##Pooled Imputed Model##
 mi.fit=glm.mids(mental~as.factor(state) + sleep + male + as.factor(employ) + actlimit + as.factor(metro) + exer30 + as.factor(race) + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=imputedat)
 summary(mi.fit)
@@ -218,6 +220,45 @@ comb.test50 = pool(mi.fit50)
 print(xtable(summary(comb.test50)[,c("est","se","fmi")]))
 ```
 
+
+##Validity Study##
+```{r}
+require(mosaic)
+set.seed(500)
+val<-mhfp[complete.cases(mhfp),]
+val2<-val[sample(nrow(val), 20876),]
+
+set.seed(500)
+random<-sample(0:1, size=20876, replace=TRUE)
+randodat<-val2
+randodat<-mutate(randodat, mental=ifelse(random==1, NA, mental))
+randodat<-mutate(randodat, metro=ifelse(random==1, NA, metro))
+randodat<-mutate(randodat, sleep=ifelse(random==1, NA, sleep))
+
+# library(mice)
+# library(VIM)
+# md.pattern(randodat)
+# miplot2<-aggr(randodat, col=c('red','blue'),
+#                     numbers=TRUE, sortVars=TRUE,
+#                     labels=names(mhfp), cex.axis=.7,
+#                     gap=3, ylab=c("Missing data","Pattern"))
+# 
+# ##20 iterations##
+# imputedatval<-mice(randodat, m=10, maxit = 20, method = 'sample', seed = 500, print=TRUE)
+# summary(imputedatval)
+# compdatval<-complete(imputedatval,2)
+# save(imputedatval, file = "imputedsetsval.Rda")
+# save(compdatval, file = "completeimputedval.Rda")
+# 
+# ##50 iterations##
+# imputedat50val<-mice(randodat, m=10, maxit = 50, method = 'sample', seed = 500, print=TRUE)
+# summary(imputedat50val)
+# compdat50val<-complete(imputedat50val,2)
+# save(imputedat50val, file = "imputedsets50val.Rda")
+# save(compdat50val, file="completeimputed50val.Rda")
+```
+
+
 ```{r}  
 library(mice)
 library(VIM)
@@ -226,9 +267,14 @@ load("imputedsetsval.Rda")
 load("completeimputedval.Rda")
 ##Truth Model##
 fit.tval<-glm(formula=mental~as.factor(state) + sleep + male + as.factor(employ) + actlimit + as.factor(metro) + exer30 + as.factor(race) + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=val2)
+summtruth<-summary(fit.tval)$coef[,c("Estimate","Std. Error")]
+summtruth<-summtruth[-c(2:19,22:28,34:37), ]
+print(xtable(summtruth))
 
 ##Complete Case Model##
 fit.ccval<-glm(formula=mental~as.factor(state) + sleep + male + as.factor(employ) + actlimit + as.factor(metro) + exer30 + as.factor(race) + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=randodat)
+summval<-summary(fit.cc)$coef[,c("Estimate","Std. Error")]
+summval<-summval[-c(2:19,22:28,34:37), ]
 print(xtable(summary(fit.cc)$coef[,c("Estimate","Std. Error")]))
 
 #str(imputedat$imp$sexorient)
