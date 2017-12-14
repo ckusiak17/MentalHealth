@@ -331,11 +331,11 @@ print(xtable(summary(comb.test50val)[,c("est","se","fmi")]))
 
 ##Introduction  
 
-The goal of my project is to test the performance of the different model selection algorithms of ridge, LASSO, and stepwise regression. LASSO and Ridge regressions are both forms of coefficient regularization. In addition to minimizing the residual sums of squares, these methods penalize covariates in our model based on some constraints. For ridge regression this can be written as: $\sum_{j=1}^p \beta^2_j < c$ with p = number of predictors and c a constant. For LASSO, this can be written as $\sum_{j=1}^p |\beta_j| < c$ [@stanford]. The important distinction between these two methods is that the LASSO method acutally drops predictors out of the model while the ridge method only shrinks coefficients close to 0.   
+The goal of my project is to test the performance of the different model selection algorithms of ridge, LASSO, and stepwise regression. LASSO and Ridge regressions are both forms of coefficient regularization. In addition to minimizing the residual sums of squares, these methods penalize covariates in our model based on some constraints. For ridge regression this can be written as: $\sum_{j=1}^p \beta^2_j < c$ with p = number of predictors and c a constant. For LASSO, this can be written as $\sum_{j=1}^p |\beta_j| < c$ [@stanford]. The important distinction between these two methods is that the LASSO method acutally drops predictors out of the model while the ridge method only shrinks coefficients close to 0. We will use the `cv.glmnet` function available in the `glmnet` package to run these regressions.   
 
-Stepwise regression begins with a set of candidate predictors and adds or removes variables based on improvements to the model's AIC. Forward selection begins with no predictors and tests which one additional variable will improve the model. This continues until AIC improvements stop. Backwards selection begins with all available predictors and removes them one-by-one until AIC improvements stop [@ncss]. For the purpose of this study, we will focus on a combination of both forward and backward selection. This can be done usind the the `both` option in the      
+Stepwise regression begins with a set of candidate predictors and adds or removes variables based on improvements to the model's AIC. Forward selection begins with no predictors and tests which one additional variable will improve the model. This continues until AIC improvements stop. Backwards selection begins with all available predictors and removes them one-by-one until AIC improvements stop [@ncss]. For the purpose of this study, we will focus on a combination of both forward and backward selection. This can be done usind the the `both` option in the `stepAIC` function available in the `MASS` package.     
 
-```{r, include=FALSE, message=FALSE}
+```{r packages, include=FALSE, message=FALSE}
 require(glmnet)
 require(MASS)
 require(pROC)
@@ -350,34 +350,30 @@ options(xtable.comment = FALSE)
 
 ###Specifications  
 
-To begin, I fit these three algorithms on the full data.   
+To begin, I fit these three algorithms on the full data. The difference between the LASSO and ridge regressions are illustrated below.   
 
 ```{r, echo=FALSE, fig.height=4}
-load("coco.Rda")
+load("coco_final_safe.Rda")
 
-#par(mfrow = c(1, 2))
-#plot(ridge, xvar = "dev", xlab = "Ridge Regression")
-#plot(lasso, xvar = "dev", xlab = "LASSO Regression")
 par(mfrow = c(1, 2))
 plot_glmnet(ridge, xvar = "dev", xlab = "Ridge Regression")
 plot_glmnet(lasso, xvar = "dev", xlab = "LASSO Regression")
-#title("Coefficient Shrinkage vs. Explained Deviance", outer=TRUE)
 ```   
 
-The plot above show the coefficient shrinkage as a function of the model's fraction of explained deviance. Each curve represents a predictor. At the far right, all predictors are unpenalized. As you move to the left, the explained deviance decreases as the coefficients shrink closer to 0. The numbers along the upper x-axis represent the number of predictors remaining in the model. The Ridge model maintains all 14 variables even when the explained deviance is essentially zero. At this point in the LASSO plot, 0 predictors remain. The Ridge method shrinks coefficients very _close_ to 0, but the LASSO method drops some coefficients exactly to 0, removing them completely from the model. 
+The plot above show the coefficient shrinkage as a function of the model's fraction of explained deviance. Each curve represents a predictor. At the far right, all predictors are unpenalized. As you move to the left, the explained deviance decreases as the coefficients shrink closer to 0. The numbers along the upper x-axis represent the number of predictors remaining in the model (our effective degrees of freedom). The Ridge model maintains all 14 variables even when the explained deviance is essentially zero. At this point in the LASSO plot, 0 predictors remain. The Ridge method shrinks coefficients very _close_ to 0, but the LASSO method drops coefficients exactly to 0, removing them completely from the model. 
 
 ```{r, echo=FALSE, results ='asis'}
 step1 <- filter(coefficients, variable %in% c("binge", "bmi", "exer30", "male", "sleep"))
 print(xtable(step1, digits = 4), caption = "Subset of Coefficient Estimates from Selection Algorithms",
       caption.placement = "top")
 ```  
-As shown above, most of the coefficient estimates are similar between the algorithms. However, for `bmi` the stepwise and ridge methods estimate oppisite directions of association with the probability of having poor mental health, while the LASSO method drops it out of the model completely. However, across the three methods, it does not seem to have a large effect on mental health. `Exer30` has consistent estimates through the algorithms. Each estimate a coefficient of about -0.10 with $e^{-0.10} = 0.90$. This can be interpreted to mean that those who have exercised within the past 30 days have a 10% lower odds of having experienced poor mental health.  
+As shown above, most of the coefficient estimates are similar between the algorithms. However, for `bmi` the stepwise and ridge methods estimate oppisite directions of association with the probability of having poor mental health, while the LASSO method drops it out of the model completely. However, across the three methods, it does not seem to have a large effect on mental health. `Exer30` has consistent estimates through the algorithms. Each estimate a coefficient of about -0.08 with $e^{-0.08} = 0.92$. This can be interpreted to mean that those who have exercised within the past 30 days have a 8% lower odds of having experienced poor mental health.  
 
-Again the ridge model keeps all 14 variables. The stepwise models also maintains all of the variables except for `metro` and `trans`. The LASSO menthod keeps only 10, removing `bmi`, `actlimit`, `race`, `state`, and `trans`.   
+Again the ridge model keeps all 14 variables. The stepwise models maintains all of the variables except for `metro` and `trans`. The LASSO menthod keeps only 10, removing `bmi`, `actlimit`, `race`, `state`, and `trans`.   
 
 ###Performance  
 
-The previous analyses were trained on the entire data. To test each algorithm's performace, a 10-fold cross validation is run. This method divides the data into 10 partitions. For each partition, the mehtods are trained on 90% of the data and tested on the remained 10%. For each model and each iteration, a receiver operating characteristic curve is created. The average area under the curve for model is display above. We use this metric to as our measure of performance. The results are displayed below.  
+The previous analyses were trained on the entire data. To test each algorithm's performace, a 10-fold cross validation is run. This method divides the data into 10 partitions. For each partition, the methods are trained on 90% of the data and tested on the remaining 10%. For each model and each iteration, a receiver operating characteristic curve is created. The average area under the curve for model is display below. We use this metric as our measure of performance.   
 
 ```{r, echo = FALSE, results='asis'}
 compare <- data.frame(Mean.AUC = round(c(mean(auc.test.aic), mean(auc.test.lasso), 
@@ -392,14 +388,14 @@ As can be seen above, the stepwise method yields the highest area under the curv
 
 ##Step 2: Simulation Study    
 
-The next step in this investigation is running a simulation study. A simulation study is a computer-based experiment involving randomly generated samples of the data [@sim]. We will do this by sampling $n$ times from the original data. We will then generate new mental health values using the model specified by the stepwise selection algorithm outlined above. This means that in this case, we will know the true outcome generating process. This model icludes factors levels for every state, employment, and income level, thus an abridged version is written below:  
+The next step in this investigation is running a simulation study. A simulation study is a computer-based experiment involving randomly generated samples of the data [@sim]. We will do this by sampling $n$ times from the original data. We will then generate new mental health outcomes using the model specified by the stepwise selection algorithm outlined above. This means that in this case, we will know the true outcome generating process. This model icludes factors levels for every state, employment, and income level, thus an abridged version is written below:  
 
 $$logit(mental) = 1.10 -0.29(actlimit = 1) + 0.42(binge) + 0.02(bmi) - 0.21(employ = 2) + 0.38(employ = 3)$$  
 $$ - 0.50(male) - 0.11(sleep) + 0.21(trans =1)$$  
 
 In order to test how the performance of these algorithms depend on sample size, we reran them on samples of size 10,000 and 100,000. The means and standard deviations across these iterations are displayed below.    
 
-__Note:__ These datasets include all 14 variables originally available for the models to choose from. This means that this includes `metro` and `trans` which were not variables used to generate outcomes from the stepwise model.
+__Note:__ These datasets include all 14 variables originally available for the models to choose from. Thus this includes `metro` and `trans` which were not variables used to generate outcomes from the stepwise model.
 
 
 ```{r echo = FALSE, results='asis'}
@@ -417,15 +413,14 @@ print(xtable(compare.sim, digits = 5), caption = "Performance Metrics for Simula
 
 ##Conclusions  
 
-Our analyses have consistently shown stepwise regression to have the highest performance in terms of prediction for this dataset. It steadily resulted in the highest area under the curve.   
+Across all simulations, ridge regression showed to have the lowest predictive ability, but also the lowest variance in its estimtes. Stepwise resulted in the highest area under the curve at every step of this analysis. For LASSO and ridge, there seems to be an increase in predictive ability with an increase in sample size. This same pattern was not seen with stepwise regression. However, the standard deviation of the stepwise estimates decreased by about 80% with a 10fold increase in sample size. Our analyses have consistently shown stepwise regression to have the highest performance in terms of prediction for this dataset.    
 
 
+Stepwise selection has been criticized since the stronger computing power has enabled us to use more computationally intensive methods such as LASSO selection. Stepwise's main advantages are that it is easy to implement and easy to understand[@stack]. However, it is associated with a lot of disadvantages as well. Firstly, the stepwise approach is highly dependent on its initial set of candidate predictors and it is known to fall victim to finding spurious assocations [@stack3]. Because it makes decisions at every step, it can make choices that are "locally optimal, but suboptimal in general" [@stack2]. These arbitrary choices can cause "severe biases in the resulting multivariable model fits while losing valuable predictive information from deleting marginally significant variables" [@stack]. Thus overall, this method can result in strong biases and deceptive findings.
 
-Stepwise selection has been criticized since the stronger computing power has enabled us to use more computationally intensive methods such as LASSO selection. Stepwise's main advantages are that it is easy to implement and easy to understand[@stack]. However, it is associated with a lot of disadvantages as well. Firstly, the stepwise approach is highly dependent on its initial set of candidate predictors. It is known to fall victim to finding spurious assocations [@stack3]. Because it makes decisions at every step, it can make choices that are "locally optimal, but suboptimal in general" [@stack2]. These arbitrary choices can cause "severe biases in the resulting multivariable model fits while losing valuable predictive information from deleting marginally significant variables" [@stack]. Thus overall, this method can result in strong biases and deceptive findings.
+So why has the stepwise algorithm outperformed the others with this data? This could perhaps be because although there is a large sample size, there are only 14 predictors to parse through. LASSO regression typically does better than stepwise and ridge regression methods when the number of predictors, p > n. This is not the case in this study. Often a concern for stepwise regression is overfitting which is also likely to occur when p > n. Here though, this is not a worry. However, it is not completely surprising that in this context, the stepwise selection yields different results than the others because its algorithm is based on AIC rather than the penalization restraints used by LASSO and ridge regressions.  
 
-So why has the stepwise algorithm outperformed the others with this data? This could perhaps be because although there is a large sample size, there are only 14 predictors to parse through. LASSO regression typically does better than stepwise and ridge regression methods when the number of predictors, p > n. This is not the case in this study. Often a concern for stepwise regression is overfitting which is also likely to occur when p > n. Here though, this is not a worry. However, it is not completely surprising that in this context, the stepwise selection yields different results that the others becuase its algorithm is based on AIC rather than the penalization restraints used by LASSO and ridge regressions.  
-
-Overall, although this study found the stepwise algorithm to have the best performance, I would not say this method is the best selection by any means. Just because its model performed well here, it does not mean it will in other contexts. One huge disadvantage to stepwise is the computing time necessary with large sample sizes. For samples sized below 1,000 and 10 iterations, it fit in just under a minute. However, with sizes over 5,000, the time proliferated. The simulations with i = 100 and samples of 100,000 observations, the stepwise model took over 12 hours to run. Thus for larger samples and more iterations stepwise selection would be relatively infeasible in comparison to LASSO and rigde regression which took less than 10% of the time. It seems that each method may have its place in different situations. For example, ridge outperforms both LASSO and stepwise when the effects are better predicted by a combination of many weak predictors [@stack2]. In conclusion, although stepwise regression performs well with these data, it is not the best model selection algorithm across the board and multiple methods should always be implemented and compared whenever it is practical to do so.   
+Overall, although this study found the stepwise algorithm to have the best performance, I would not say this method is the best for selection by any means. Just because its model performed well here, it does not mean it will in other contexts. One huge disadvantage to stepwise is the computing time necessary with large sample sizes. For samples sized below 1,000 and with only 10 iterations, it fit in just under a minute. However, with sizes over 5,000, the time proliferated. With simulations with i = 100 and samples of 100,000 observations, the stepwise model took over 12 hours to run. Thus for larger samples and more iterations stepwise selection would be relatively infeasible in comparison to LASSO and rigde regression which combined took less than 10% of the time. It seems that each method may have its place in different situations. For example, ridge outperforms both LASSO and stepwise when the effects are better predicted by a combination of many weak predictors [@stack2]. In conclusion, although stepwise regression performs well with these data, it is not the best model selection algorithm across the board and multiple methods should always be implemented and compared whenever it is practical to do so.   
 
 
 \newpage

@@ -1,4 +1,3 @@
-
 require(glmnet)
 require(MASS)
 require(pROC)
@@ -74,7 +73,7 @@ ment <- mutate(ment, fold = folds)
 auc.test.lasso <- c()
 auc.test.ridge <- c()
 auc.test.aic <- c()
-auc.test.aic2 <- c()
+
 for (i in 1:10){
   data.training <- filter(ment, fold != i)
   data.test <- filter(ment, fold == i)
@@ -96,14 +95,11 @@ for (i in 1:10){
   preds.test.ridge <- as.numeric(predict(cv.ridge, newx = x.test, type = "class"))
   indexes <-  which(ment$fold == i)
   ors.test.aic <- predict(model.AIC, newx = subset(data.test, select = -mental), type = "response")[indexes]
-  preds.test.aic <- ifelse(ors.test.aic < .5,
-                           yes = 0, no = 1)
-  preds.test.aic2 <- rbinom(n = length(preds.test.aic), size = 1, prob = ors.test.aic)
+  preds.test.aic <- rbinom(n = length(preds.test.aic), size = 1, prob = ors.test.aic)
   #area under the curve
   auc.test.lasso[i] <- auc(roc(predictor = preds.test.lasso, response = data.test$mental))
   auc.test.ridge[i] <- auc(roc(predictor = preds.test.ridge, response = data.test$mental))
   auc.test.aic[i] <- auc(roc(predictor = preds.test.aic, response = data.test$mental))
-  auc.test.aic2[i] <- auc(roc(predictor = preds.test.aic2, response = data.test$mental))
   
 }
 
@@ -122,9 +118,9 @@ simulated <- subset(simulated, select = - c(mental))
 auc10_lasso <- c()
 auc10_ridge <- c()
 auc10_aic <- c()
-auc10_aic2 <- c()
 
-for (i in 1:10){
+
+for (i in 1:100){
   data <- sample(simulated, size = 10000)
   index <- data$index
   ors <- predict(model.AIC, newx = data, type = "response")[index] 
@@ -145,21 +141,18 @@ for (i in 1:10){
   trial <- mutate(data,
                   y.lasso = as.numeric(predict(fit.lasso, newx = x, type = "class")), 
                   y.ridge = as.numeric(predict(fit.ridge, newx = x, type = "class")), 
-                  y.aic = ifelse(predict(fit.AIC, newx = x, type = "response") < .5, 
-                                 yes = 0, no = 1),
-                  y.aic2 = as.numeric(rbinom(n = nrow(data), size = 1, 
+                  y.aic = as.numeric(rbinom(n = nrow(data), size = 1, 
                                              prob = predict(fit.AIC, newx = x, type = "response"))))
   auc10_lasso[i] <- auc(roc(predictor = trial$y.lasso, response = data$mental))
   auc10_ridge[i] <- auc(roc(predictor = trial$y.ridge, response = data$mental))
   auc10_aic[i] <- auc(roc(predictor = trial$y.aic, response = data$mental))
-  auc10_aic2[i] <- auc(roc(predictor = trial$y.aic2, response = data$mental))
 }
 
 
 auc1000_lasso <- c()
 auc1000_ridge <- c()
 auc1000_aic <- c()
-auc1000_aic2 <- c()
+
 
 for (i in 1:100){
   data <- sample(simulated, size = 100000)
@@ -182,21 +175,19 @@ for (i in 1:100){
   trial <- mutate(data,
                   y.lasso = as.numeric(predict(fit.lasso, newx = x, type = "class")), 
                   y.ridge = as.numeric(predict(fit.ridge, newx = x, type = "class")), 
-                  y.aic = ifelse(predict(fit.AIC, newx = x, type = "response") < .5, 
-                                 yes = 0, no = 1),
-                  y.aic2 = as.numeric(rbinom(n = nrow(data), size = 1,
+                  y.aic = as.numeric(rbinom(n = nrow(data), size = 1,
                                              prob = predict(fit.AIC, newx = x, type = "response"))))
   auc1000_lasso[i] <- auc(roc(predictor = trial$y.lasso, response = data$mental))
   auc1000_ridge[i] <- auc(roc(predictor = trial$y.ridge, response = data$mental))
   auc1000_aic[i] <- auc(roc(predictor = trial$y.aic, response = data$mental))
-  auc1000_aic2[i] <- auc(roc(predictor = trial$y.aic2, response = data$mental))
+
 }
 
 
-auc1000_lasso <- c()
-auc1000_ridge <- c()
-auc1000_aic <- c()
-auc1000_aic2 <- c()
+auc2000_lasso <- c()
+auc2000_ridge <- c()
+auc2000_aic <- c()
+
 
 for (i in 1:10){
   data <- sample(simulated, size = 200000)
@@ -219,17 +210,16 @@ for (i in 1:10){
   trial <- mutate(data,
                   y.lasso = as.numeric(predict(fit.lasso, newx = x, type = "class")), 
                   y.ridge = as.numeric(predict(fit.ridge, newx = x, type = "class")), 
-                  y.aic = ifelse(predict(fit.AIC, newx = x, type = "response") < .5, 
-                                 yes = 0, no = 1),
-                  y.aic2 = as.numeric(rbinom(n = nrow(data), size = 1,
+                  y.aic = as.numeric(rbinom(n = nrow(data), size = 1,
                                              prob = predict(fit.AIC, newx = x, type = "response"))))
-  auc1000_lasso[i] <- auc(roc(predictor = trial$y.lasso, response = data$mental))
-  auc1000_ridge[i] <- auc(roc(predictor = trial$y.ridge, response = data$mental))
-  auc1000_aic[i] <- auc(roc(predictor = trial$y.aic, response = data$mental))
-  auc1000_aic2[i] <- auc(roc(predictor = trial$y.aic2, response = data$mental))
+  auc2000_lasso[i] <- auc(roc(predictor = trial$y.lasso, response = data$mental))
+  auc2000_ridge[i] <- auc(roc(predictor = trial$y.ridge, response = data$mental))
+  auc2000_aic[i] <- auc(roc(predictor = trial$y.aic, response = data$mental))
+
 }
 save(auc.test.aic, auc.test.lasso, auc.test.ridge, auc10_ridge, auc10_aic, auc10_lasso, 
-auc1000_aic, auc1000_lasso, auc1000_ridge, coefficients, lasso, ridge, file = "coco2.Rda")
+auc1000_aic, auc1000_lasso, auc1000_ridge, auc2000_aic, auc2000_lasso, auc2000_ridge,
+coefficients, lasso, ridge, file = "coco_final.Rda")
 
 
 
