@@ -118,13 +118,37 @@ library(VIM)
 library(xtable)
 load("imputedsets.Rda")
 load("completeimputed.Rda")
+compdat$income<-as.factor(compdat$income)
+compdat$state<-as.factor(compdat$state)
+compdat$metro<-as.factor(compdat$metro)
+compdat$smoker<-as.factor(compdat$smoker)
+compdat$employ<-as.factor(compdat$employ)
+compdat$trans<-as.factor(compdat$trans)
+compdat$actlimit<-as.factor(compdat$actlimit)
+
+mhfp$income<-as.factor(mhfp$income)
+mhfp$state<-as.factor(mhfp$state)
+mhfp$metro<-as.factor(mhfp$metro)
+mhfp$smoker<-as.factor(mhfp$smoker)
+mhfp$employ<-as.factor(mhfp$employ)
+mhfp$trans<-as.factor(mhfp$trans)
+mhfp$actlimit<-as.factor(mhfp$actlimit)
+
 ##Complete Case Model##
 fit.cc<-glm(formula=mental~state + sleep + male + employ + actlimit + metro + exer30 + race + income + smoker + binge, family="binomial", data=mhfp)
 #str(imputedat$imp$sexorient)
 completedatfit = complete(imputedat, action="long") 
+completedatfit$income<-as.factor(completedatfit$income)
+completedatfit$state<-as.factor(completedatfit$state)
+completedatfit$metro<-as.factor(completedatfit$metro)
+completedatfit$smoker<-as.factor(completedatfit$smoker)
+completedatfit$employ<-as.factor(completedatfit$employ)
+completedatfit$trans<-as.factor(completedatfit$trans)
+completedatfit$actlimit<-as.factor(completedatfit$actlimit)
+
 head(completedatfit)
 ##Pooled Imputed Model##
-mi.fit=glm.mids(mental~state + sleep + male + employ + actlimit + metro + exer30 + race + income + smoker + binge, family="binomial", data=imputedat)
+mi.fit=glm.mids(mental~as.factor(state) + sleep + male + as.factor(employ) + actlimit + as.factor(metro) + exer30 + race + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=imputedat)
 head(summary(mi.fit))
 comb.test = pool(mi.fit)
 ##Summary Table##
@@ -140,9 +164,18 @@ load("imputedsets50.Rda")
 load("completeimputed50.Rda")
 str(imputedat$imp$sexorient)
 completedatfit50 = complete(imputedat50, action="long") 
+
+completedatfit50$income<-as.factor(completedatfit50$income)
+completedatfit50$state<-as.factor(completedatfit50$state)
+completedatfit50$metro<-as.factor(completedatfit50$metro)
+completedatfit50$smoker<-as.factor(completedatfit50$smoker)
+completedatfit50$employ<-as.factor(completedatfit50$employ)
+completedatfit50$trans<-as.factor(completedatfit50$trans)
+completedatfit50$actlimit<-as.factor(completedatfit50$actlimit)
+
 head(completedatfit50)
 ##Pooled Imputed Model##
-mi.fit50=glm.mids(mental~state + sleep + male + employ + actlimit + metro + exer30 + race + income + smoker + binge, family="binomial", data=imputedat50)
+mi.fit50=glm.mids(mental~as.factor(state) + sleep + male + as.factor(employ) + actlimit + as.factor(metro) + exer30 + race + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=imputedat50)
 head(summary(mi.fit50))
 comb.test50 = pool(mi.fit50)
 ##Summary Table##
@@ -171,14 +204,14 @@ miplot2<-aggr(randodat, col=c('red','blue'),
                     gap=3, ylab=c("Missing data","Pattern"))
 
 ##20 iterations##
-imputedatval<-mice(randodat, m=10, maxit = 20, method = 'sample', seed = 500, print=FALSE)
+imputedatval<-mice(randodat, m=10, maxit = 20, method = 'sample', seed = 500, print=TRUE)
 summary(imputedatval)
 compdatval<-complete(imputedatval,2)
 save(imputedatval, file = "imputedsetsval.Rda")
 save(compdatval, file = "completeimputedval.Rda")
 
 ##50 iterations##
-imputedat50val<-mice(randodat, m=10, maxit = 50, method = 'sample', seed = 500, print=FALSE)
+imputedat50val<-mice(randodat, m=10, maxit = 50, method = 'sample', seed = 500, print=TRUE)
 summary(imputedat50val)
 compdat50val<-complete(imputedat50val,2)
 save(imputedat50val, file = "imputedsets50val.Rda")
@@ -192,13 +225,25 @@ library(VIM)
 library(xtable)
 load("imputedsetsval.Rda")
 load("completeimputedval.Rda")
+##Truth Model##
+fit.tval<-glm(formula=mental~as.factor(state) + sleep + male + as.factor(employ) + actlimit + as.factor(metro) + exer30 + race + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=val2)
+
 ##Complete Case Model##
-fit.ccval<-glm(formula=mental~state + sleep + male + employ + actlimit + metro + exer30 + race + income + smoker + binge, family="binomial", data=randodat)
+fit.ccval<-glm(formula=mental~as.factor(state) + sleep + male + as.factor(employ) + actlimit + as.factor(metro) + exer30 + race + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=randodat)
 #str(imputedat$imp$sexorient)
 completedatfitval = complete(imputedatval, action="long") 
+
+completedatfitval$income<-as.factor(completedatfitval$income)
+completedatfitval$state<-as.factor(completedatfitval$state)
+completedatfitval$metro<-as.factor(completedatfitval$metro)
+completedatfitval$smoker<-as.factor(completedatfitval$smoker)
+completedatfitval$employ<-as.factor(completedatfitval$employ)
+completedatfitval$trans<-as.factor(completedatfitval$trans)
+completedatfitval$actlimit<-as.factor(completedatfitval$actlimit)
+
 head(completedatfitval)
 ##Pooled Imputed Model##
-mi.fitval=glm.mids(mental~state + sleep + male + employ + actlimit + metro + exer30 + race + income + smoker + binge, family="binomial", data=imputedatval)
+mi.fitval=glm.mids(mental~as.factor(state) + sleep + male + as.factor(employ) + actlimit + as.factor(metro) + exer30 + race + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=imputedatval)
 head(summary(mi.fitval))
 comb.testval = pool(mi.fitval)
 ##Summary Table##
@@ -214,9 +259,18 @@ load("imputedsets50val.Rda")
 load("completeimputed50val.Rda")
 str(imputedat50val$imp$sexorient)
 completedatfit50val = complete(imputedat50val, action="long") 
+
+completedatfit50val$income<-as.factor(completedatfit50val$income)
+completedatfit50val$state<-as.factor(completedatfit50val$state)
+completedatfit50val$metro<-as.factor(completedatfit50val$metro)
+completedatfit50val$smoker<-as.factor(completedatfit50val$smoker)
+completedatfit50val$employ<-as.factor(completedatfit50val$employ)
+completedatfit50val$trans<-as.factor(completedatfit50val$trans)
+completedatfit50val$actlimit<-as.factor(completedatfit50val$actlimit)
+
 head(completedatfit50val)
 ##Pooled Imputed Model##
-mi.fit50val=glm.mids(mental~state + sleep + male + employ + actlimit + metro + exer30 + race + income + smoker + binge, family="binomial", data=imputedat50val)
+mi.fit50val=glm.mids(mental~as.factor(state) + sleep + male + as.factor(employ) + actlimit + as.factor(metro) + exer30 + race + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=imputedat50val)
 head(summary(mi.fit50val))
 comb.test50val = pool(mi.fit50val)
 ##Summary Table##
