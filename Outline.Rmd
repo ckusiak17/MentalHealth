@@ -135,7 +135,8 @@ mhfp$trans<-as.factor(mhfp$trans)
 mhfp$actlimit<-as.factor(mhfp$actlimit)
 
 ##Complete Case Model##
-fit.cc<-glm(formula=mental~state + sleep + male + employ + actlimit + metro + exer30 + race + income + smoker + binge, family="binomial", data=mhfp)
+fit.cc<-glm(formula=mental~as.factor(state) + sleep + male + as.factor(employ) + actlimit + as.factor(metro) + exer30 + as.factor(race) + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=mhfp)
+
 #str(imputedat$imp$sexorient)
 completedatfit = complete(imputedat, action="long") 
 completedatfit$income<-as.factor(completedatfit$income)
@@ -148,7 +149,7 @@ completedatfit$actlimit<-as.factor(completedatfit$actlimit)
 
 head(completedatfit)
 ##Pooled Imputed Model##
-mi.fit=glm.mids(mental~as.factor(state) + sleep + male + as.factor(employ) + actlimit + as.factor(metro) + exer30 + race + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=imputedat)
+mi.fit=glm.mids(mental~as.factor(state) + sleep + male + as.factor(employ) + actlimit + as.factor(metro) + exer30 + as.factor(race) + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=imputedat)
 head(summary(mi.fit))
 comb.test = pool(mi.fit)
 ##Summary Table##
