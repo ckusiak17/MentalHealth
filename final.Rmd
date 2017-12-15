@@ -111,7 +111,7 @@ In assessing predictors of mental health state in the past 30 days, we propose t
 
 *Statistical Analyses:*
 
-We used binomial logistic regression models in the glm package in R to derive odds ratio estimates and standard errors for each variable in our final model and compared them across different missing data methods.  As noted in the methods by Coco Kusiak (CK), we designed three models for automatic variable selection of the most parsimonious model.  These models were compared using AIC.  The stepwise-selected model was chose as the most parsimonious, which is represented below:
+  We used binomial logistic regression models in the glm package in R to derive odds ratio estimates and standard errors for each variable in our final model and compared them across different missing data methods.  As noted in the methods by Coco Kusiak (CK), we designed three models for automatic variable selection of the most parsimonious model.  These models were compared using AIC.  The stepwise-selected model was chose as the most parsimonious, which is represented below:
 
 *Results and Data Generation:*  
 
@@ -170,7 +170,7 @@ load("completeimputed.Rda")
 # mhfp$actlimit<-as.factor(mhfp$actlimit)
 
 ##Complete Case Model##
-fit.cc<-glm(formula=mental~as.factor(state) + sleep + male + as.factor(employ) + actlimit + as.factor(metro) + exer30 + as.factor(race) + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=mhfp)
+fit.cc<-glm(formula=mental~as.factor(state) + sleep + male + as.factor(employ) + as.factor(actlimit) + as.factor(metro) + exer30 + as.factor(race) + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=mhfp)
 summval<-summary(fit.cc)$coef[,c("Estimate","Std. Error")]
 summval<-summval[-c(2:19,22:28,34:37), ]
 print(xtable(summary(fit.cc)$coef[,c("Estimate","Std. Error")]))
@@ -186,18 +186,12 @@ print(xtable(summary(fit.cc)$coef[,c("Estimate","Std. Error")]))
 # completedatfit$actlimit<-as.factor(completedatfit$actlimit)
 
 ##Pooled Imputed Model##
-mi.fit=glm.mids(mental~as.factor(state) + sleep + male + as.factor(employ) + actlimit + as.factor(metro) + exer30 + as.factor(race) + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=imputedat)
+mi.fit=glm.mids(mental~as.factor(state) + sleep + male + as.factor(employ) + as.factor(actlimit) + as.factor(metro) + exer30 + as.factor(race) + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=imputedat)
 summary(mi.fit)
 comb.test = pool(mi.fit)
 ##Summary Table##
 print(xtable(summary(comb.test)[,c("est","se","fmi")]))
-```
 
-
-```{r}
-library(mice)
-library(VIM)
-library(xtable)
 load("imputedsets50.Rda")
 load("completeimputed50.Rda")
 str(imputedat$imp$sexorient)
@@ -213,12 +207,30 @@ completedatfit50$actlimit<-as.factor(completedatfit50$actlimit)
 
 head(completedatfit50)
 ##Pooled Imputed Model##
-mi.fit50=glm.mids(mental~as.factor(state) + sleep + male + as.factor(employ) + actlimit + as.factor(metro) + exer30 + as.factor(race) + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=imputedat50)
-head(summary(mi.fit50))
+mi.fit50=glm.mids(mental~as.factor(state) + sleep + male + as.factor(employ) + as.factor(actlimit) + as.factor(metro) + exer30 + as.factor(race) + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=imputedat50)
 comb.test50 = pool(mi.fit50)
 ##Summary Table##
 print(xtable(summary(comb.test50)[,c("est","se","fmi")]))
 ```
+
+```{r}
+tab1 <- as.data.frame(summval)
+tab1 <- mutate(tab1, id = rownames(tab1))
+tab1 <- filter(tab1, id != "actlimit2")
+tab2 <- as.data.frame(summary(comb.test)[,c("est","se","fmi")])
+tab2 <- mutate(tab2, id = rownames(tab3))
+tab3 <- as.data.frame(summary(comb.test50)[,c("est","se","fmi")])
+tab3 <- mutate(tab3, id = rownames(tab4))
+
+combined1 <- left_join(tab1, tab2, by = "id")
+combined2 <- left_join(combined1,tab3, by = "id")
+rownames(combined) <- combined$id
+combined <- subset(combined, select = - id)
+colnames(combined) <- c("CC.Estimates", "CC.SE", "MI20.Estimates", "MI20.SE", "MI50.Estimates", "MI50.SE")
+print(xtable(combined, caption = "Title", caption.place = 'top', digits = 5))
+```
+
+
 
 
 ##Validity Study##
@@ -238,10 +250,6 @@ randodat<-mutate(randodat, sleep=ifelse(random==1, NA, sleep))
 # library(mice)
 # library(VIM)
 # md.pattern(randodat)
-# miplot2<-aggr(randodat, col=c('red','blue'),
-#                     numbers=TRUE, sortVars=TRUE,
-#                     labels=names(mhfp), cex.axis=.7,
-#                     gap=3, ylab=c("Missing data","Pattern"))
 # 
 # ##20 iterations##
 # imputedatval<-mice(randodat, m=10, maxit = 20, method = 'sample', seed = 500, print=TRUE)
@@ -266,57 +274,47 @@ library(xtable)
 load("imputedsetsval.Rda")
 load("completeimputedval.Rda")
 ##Truth Model##
-fit.tval<-glm(formula=mental~as.factor(state) + sleep + male + as.factor(employ) + actlimit + as.factor(metro) + exer30 + as.factor(race) + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=val2)
+fit.tval<-glm(formula=mental~as.factor(state) + sleep + male + as.factor(employ) + as.factor(actlimit) + as.factor(metro) + exer30 + as.factor(race) + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=val2)
 summtruth<-summary(fit.tval)$coef[,c("Estimate","Std. Error")]
 #summtruth<-summtruth[-c(2:19,22:28,34:37), ]
 print(xtable(summtruth))
 
 ##Complete Case Model##
-fit.ccval<-glm(formula=mental~as.factor(state) + sleep + male + as.factor(employ) + actlimit + as.factor(metro) + exer30 + as.factor(race) + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=randodat)
+fit.ccval<-glm(formula=mental~as.factor(state) + sleep + male + as.factor(employ) + as.factor(actlimit) + as.factor(metro) + exer30 + as.factor(race) + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=randodat)
 summval<-summary(fit.cc)$coef[,c("Estimate","Std. Error")]
 summval<-summval[-c(2:19,22:28,34:37), ]
 print(xtable(summary(fit.cc)$coef[,c("Estimate","Std. Error")]))
 
 #str(imputedat$imp$sexorient)
-completedatfitval = complete(imputedatval, action="long") 
+# completedatfitval = complete(imputedatval, action="long") 
+# completedatfitval$income<-as.factor(completedatfitval$income)
+# completedatfitval$state<-as.factor(completedatfitval$state)
+# completedatfitval$metro<-as.factor(completedatfitval$metro)
+# completedatfitval$smoker<-as.factor(completedatfitval$smoker)
+# completedatfitval$employ<-as.factor(completedatfitval$employ)
+# completedatfitval$trans<-as.factor(completedatfitval$trans)
+# completedatfitval$actlimit<-as.factor(completedatfitval$actlimit)
 
-completedatfitval$income<-as.factor(completedatfitval$income)
-completedatfitval$state<-as.factor(completedatfitval$state)
-completedatfitval$metro<-as.factor(completedatfitval$metro)
-completedatfitval$smoker<-as.factor(completedatfitval$smoker)
-completedatfitval$employ<-as.factor(completedatfitval$employ)
-completedatfitval$trans<-as.factor(completedatfitval$trans)
-completedatfitval$actlimit<-as.factor(completedatfitval$actlimit)
-
-head(completedatfitval)
 ##Pooled Imputed Model##
-mi.fitval=glm.mids(mental~as.factor(state) + sleep + male + as.factor(employ) + actlimit + as.factor(metro) + exer30 + as.factor(race) + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=imputedatval)
+mi.fitval=glm.mids(mental~as.factor(state) + sleep + male + as.factor(employ) + as.factor(actlimit) + as.factor(metro) + exer30 + as.factor(race) + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=imputedatval)
 head(summary(mi.fitval))
 comb.testval = pool(mi.fitval)
 ##Summary Table##
 print(xtable(summary(comb.testval)[,c("est","se","fmi")], caption = "This is the title", caption.placement = 'top'))
-```
 
-
-```{r}
-##Code used from Ken Kleinmann lectures##
-library(mice)
-library(VIM)
-library(xtable)
 load("imputedsets50val.Rda")
 load("completeimputed50val.Rda")
 str(imputedat50val$imp$sexorient)
 completedatfit50val = complete(imputedat50val, action="long") 
 
-completedatfit50val$income<-as.factor(completedatfit50val$income)
-completedatfit50val$state<-as.factor(completedatfit50val$state)
-completedatfit50val$metro<-as.factor(completedatfit50val$metro)
-completedatfit50val$smoker<-as.factor(completedatfit50val$smoker)
-completedatfit50val$employ<-as.factor(completedatfit50val$employ)
-completedatfit50val$trans<-as.factor(completedatfit50val$trans)
-completedatfit50val$actlimit<-as.factor(completedatfit50val$actlimit)
+# completedatfit50val$income<-as.factor(completedatfit50val$income)
+# completedatfit50val$state<-as.factor(completedatfit50val$state)
+# completedatfit50val$metro<-as.factor(completedatfit50val$metro)
+# completedatfit50val$smoker<-as.factor(completedatfit50val$smoker)
+# completedatfit50val$employ<-as.factor(completedatfit50val$employ)
+# completedatfit50val$trans<-as.factor(completedatfit50val$trans)
+# completedatfit50val$actlimit<-as.factor(completedatfit50val$actlimit)
 
-head(completedatfit50val)
 ##Pooled Imputed Model##
 mi.fit50val=glm.mids(mental~as.factor(state) + sleep + male + as.factor(employ) + as.factor(actlimit) + as.factor(metro) + exer30 + as.factor(race) + as.factor(income) + as.factor(smoker) + binge, family="binomial", data=imputedat50val)
 head(summary(mi.fit50val))
@@ -341,7 +339,7 @@ combined2 <- left_join(combined1,tab3, by = "id")
 combined <- left_join(combined2, tab4, by = "id")
 rownames(combined) <- combined$id
 combined <- subset(combined, select = - id)
-#colnames(combined) <- c("Truth.Estimates")
+colnames(combined) <- c("Truth.Estimates", "Truth.SE", "CC.Estimates", "CC.SE", "MI20.Estimates", "MI20.SE", "MI50.Estimates", "MI50.SE")
 print(xtable(combined, caption = "Title", caption.place = 'top', digits = 5))
 ```
 
