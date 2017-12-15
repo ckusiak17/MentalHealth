@@ -21,10 +21,11 @@ Depression and anxiety disorders are the most common mental illnesses in the Uni
 
 ##The Data  
 
-```{r cleaning_data, echo=FALSE, message = FALSE}
+```{r cleaning_data, echo=FALSE, message = FALSE, results='asis'}
 require(mosaic)
 require(xtable)
 require(dplyr)
+options(xtable.comment = FALSE)
 load("mhfp2.Rda")
 mhfp<-bstat743fp
 mhfp<-mhfp[,-c(6)]
@@ -84,10 +85,11 @@ table.actlimit.perc = 100*prop.table(table.actlimit)
 table.sexor.perc = 100*prop.table(table.sexor)
 ```
 
-The following chapters outline individual analyses done by Joshua Freeman, Coco Kusiak, and Luke Toomey.  
-> JF: Missing Data and Multiple Imputation 
-> CK: Comparisons of Automatic Model Selection Methods 
-> LT: Multi-Level Modeling with Random Effects  
+The following chapters outline individual analyses done on these data.   
+   1. Missing Data and Multiple Imputation by Joshua Freeman   
+   2. Comparisons of Automatic Model Selection Methods by Coco Kusiak   
+   3. Multi-Level Modeling with Random Effects by Luke Toomey    
+
 
 
 \newpage
@@ -353,14 +355,13 @@ The goal of my project is to test the performance of the different model selecti
 
 Stepwise regression begins with a set of candidate predictors and adds or removes variables based on improvements to the model's AIC. Forward selection begins with no predictors and tests which one additional variable will improve the model. This continues until AIC improvements stop. Backwards selection begins with all available predictors and removes them one-by-one until AIC improvements stop [@ncss]. For the purpose of this study, we will focus on a combination of both forward and backward selection. This can be done usind the the `both` option in the      
 
-```{r, include=FALSE, message=FALSE}
+```{r cocos_packages, include=FALSE, message=FALSE}
 require(glmnet)
 require(MASS)
 require(pROC)
 require(mosaic)
 require(plotmo)
 require(xtable)
-options(xtable.comment = FALSE)
 ```
 
 
@@ -371,7 +372,7 @@ options(xtable.comment = FALSE)
 To begin, I fit these three algorithms on the full data.   
 
 
-```{r, eval=FALSE, echo = FALSE}
+```{r fitting_algorithms, eval=FALSE, echo = FALSE}
 load("completeimputed50.Rda")
 ment <- compdat50 
 
@@ -433,7 +434,7 @@ coefficients <- merge(coefficients, ridge.coef, by = "variable", all = TRUE)
 ```
 
 
-```{r, echo=FALSE, fig.height=4}
+```{r plotting, echo=FALSE, fig.height=4}
 load("coco.Rda")
 
 par(mfrow = c(1, 2))
@@ -443,7 +444,7 @@ plot_glmnet(lasso, xvar = "dev", xlab = "LASSO Regression")
 
 The plot above show the coefficient shrinkage as a function of the model's fraction of explained deviance. Each curve represents a predictor. At the far right, all predictors are unpenalized. As you move to the left, the explained deviance decreases as the coefficients shrink closer to 0. The numbers along the upper x-axis represent the number of predictors remaining in the model. The Ridge model maintains all 14 variables even when the explained deviance is essentially zero. At this point in the LASSO plot, 0 predictors remain. The Ridge method shrinks coefficients very _close_ to 0, but the LASSO method drops some coefficients exactly to 0, removing them completely from the model. 
 
-```{r, echo=FALSE, results ='asis'}
+```{r coefficients_table, echo=FALSE, results ='asis'}
 step1 <- filter(coefficients, variable %in% c("binge", "bmi", "exer30", "male", "sleep"))
 print(xtable(step1, digits = 4, caption = "Subset of Coefficient Estimates from Selection Algorithms"),
       caption.placement = "top")
@@ -456,7 +457,7 @@ Again the ridge model keeps all 14 variables. The stepwise models also maintains
 
 The previous analyses were trained on the entire data. To test each algorithm's performace, a 10-fold cross validation is run. This method divides the data into 10 partitions. For each partition, the mehtods are trained on 90% of the data and tested on the remained 10%. For each model and each iteration, a receiver operating characteristic curve is created. The average area under the curve for model is display above. We use this metric to as our measure of performance. The results are displayed below.  
 
-```{r, eval = FALSE, echo=FALSE}
+```{r cross_validation, eval = FALSE, echo=FALSE}
 folds <- rep(1:10, each = 48630)
 folds <- c(folds, 1:3)
 folds <- sample(folds)
@@ -502,7 +503,7 @@ mean.auc.aic2 <- mean(auc.test.aic2)
 ```
 
 
-```{r, echo = FALSE, results='asis'}
+```{r comparing_cv, echo = FALSE, results='asis'}
 compare <- data.frame(Mean.AUC = round(c(mean(auc.test.aic), mean(auc.test.lasso), 
                                          mean(auc.test.ridge)), 3), 
                       SD.AUC = c(round(sd(auc.test.aic), 5), round(sd(auc.test.lasso), 5),
@@ -525,7 +526,7 @@ In order to test how the performance of these algorithms depend on sample size, 
 __Note:__ These datasets include all 14 variables originally available for the models to choose from. This means that this includes `metro` and `trans` which were not variables used to generate outcomes from the stepwise model.
 
 
-```{r, eval = FALSE, echo = FALSE}
+```{r simulations, eval = FALSE, echo = FALSE}
 simulated <- mutate(ment, index = 1:nrow(ment))
 simulated <- subset(simulated, select = - c(mental))
 
@@ -637,7 +638,7 @@ coefficients, lasso, ridge, file = "coco_final.Rda")
 ```
 
 
-```{r echo = FALSE, results='asis'}
+```{r comparing_sims, echo = FALSE, results='asis'}
 compare.sim <- data.frame(Method = c("LASSO", "Ridge", "Stepwise"),
                           `Mean 10,000` = round(c(mean(auc10_lasso), mean(auc10_ridge), mean(auc10_aic)), 4),
                           `SD 10,000` = round(c(sd(auc10_lasso), sd(auc10_ridge), sd(auc10_aic)), 5),
@@ -670,7 +671,7 @@ Overall, although this study found the stepwise algorithm to have the best perfo
 
 The table below shows a few keys predictors for sleep.  
 
-```{r, results='asis', echo =FALSE}
+```{r key_variables, results='asis', echo =FALSE}
 associations <- data.frame(var = c("Binge Drinking", "Exercise", "Male", "Sleep", "Transgender", "State = Puerto Rico", "State = Oregon"), 
                            direction = c("Positive", "Negative", "Negative", "Negative", "Positive", "Negative", "Positive"),
                            ro = c("+53%", "-8%", "-40%", "-11%", "+22%", "-45%", "+30%"),
