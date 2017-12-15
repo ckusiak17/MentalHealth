@@ -84,10 +84,10 @@ table.actlimit.perc = 100*prop.table(table.actlimit)
 table.sexor.perc = 100*prop.table(table.sexor)
 ```
 
-
-##Brief Take-aways
-
-- talk about important variables and their direction of association
+The following chapters outline individual analyses done by Joshua Freeman, Coco Kusiak, and Luke Toomey.  
+> JF: Missing Data and Multiple Imputation 
+> CK: Comparisons of Automatic Model Selection Methods 
+> LT: Multi-Level Modeling with Random Effects  
 
 
 \newpage
@@ -388,7 +388,7 @@ The plot above show the coefficient shrinkage as a function of the model's fract
 
 ```{r, echo=FALSE, results ='asis'}
 step1 <- filter(coefficients, variable %in% c("binge", "bmi", "exer30", "male", "sleep"))
-print(xtable(step1, digits = 4), caption = "Subset of Coefficient Estimates from Selection Algorithms",
+print(xtable(step1, digits = 4, caption = "Subset of Coefficient Estimates from Selection Algorithms"),
       caption.placement = "top")
 ```  
 As shown above, most of the coefficient estimates are similar between the algorithms. However, for `bmi` the stepwise and ridge methods estimate oppisite directions of association with the probability of having poor mental health, while the LASSO method drops it out of the model completely. However, across the three methods, it does not seem to have a large effect on mental health. `Exer30` has consistent estimates through the algorithms. Each estimate a coefficient of about -0.10 with $e^{-0.10} = 0.90$. This can be interpreted to mean that those who have exercised within the past 30 days have a 10% lower odds of having experienced poor mental health.  
@@ -405,7 +405,7 @@ compare <- data.frame(Mean.AUC = round(c(mean(auc.test.aic), mean(auc.test.lasso
                       SD.AUC = c(round(sd(auc.test.aic), 5), round(sd(auc.test.lasso), 5),
                                  round(sd(auc.test.ridge),5)))
 rownames(compare) <- c("Stepwise", "LASSO", "Ridge")
-print(xtable(compare, digits = 5), caption = "Mean Areas Under The Curve from Cross Validation",
+print(xtable(compare, digits = 5, caption = "Mean Areas Under The Curve from Cross Validation"),
       caption.placement = 'top')
 ```  
 As can be seen above, the stepwise method yields the highest area under the curve across the 10 iterations. This model will be used in subsequent analyses.  
@@ -429,7 +429,7 @@ compare.sim <- data.frame(Method = c("LASSO", "Ridge", "Stepwise"),
                           `Mean 100,000` = round(c(mean(auc1000_lasso), mean(auc1000_ridge), mean(auc1000_aic)), 4),
                           `SD 100,000` = round(c(sd(auc1000_lasso), sd(auc1000_ridge), sd(auc1000_aic)), 5))
 #xtable(compare.sim)
-print(xtable(compare.sim, digits = 5), caption = "Performance Metrics for Simulation Study", caption.placement = 'top')
+print(xtable(compare.sim, digits = 5, caption = "Performance Metrics for Simulation Study"), caption.placement = 'top')
 ```
 
 
@@ -450,6 +450,20 @@ Overall, although this study found the stepwise algorithm to have the best perfo
 
 #Random Effect Models 
 
+
+#Conclusion  
+
+The table below shows a few keys predictors for sleep.  
+
+```{r}
+associations <- data.frame(Variable = c("Binge Drinking", "Exercise", "Male", "Sleep", "Transgender", "State = Puerto Rico", "State = Oregon"), 
+                           `Association with Having Poor Mental Health` = c("Positive", "Negative", "Negative", "Negative", "Positive", "Negative", "Positive"),
+                           `Exponentiated Estimate` = c(1.532, 0.9185, 0.6039, 0.8949, 1.2229, 0.5504, 1.3038),
+                           `% Relative Odds` = c("+53%", "-8%", "-40%", "-11%", "+22%", "-45%", "+30%")
+                           )
+```  
+
+Binge drinking is positively associated with having poor mental health. Those who binge drink have a 53% higher odds of reporting depression or anxiety in the past 30 days. Males have a 40% lower odds of reporting poor mental health than females. Another interesting finding in that living in Puerto Rico is negatively associated with having poor mental health while living in Oregon is positively associated. 
 
 
 # References
