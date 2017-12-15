@@ -463,7 +463,7 @@ associations <- data.frame(Variable = c("Binge Drinking", "Exercise", "Male", "S
                            )
 ```  
 
-Binge drinking is positively associated with having poor mental health. Those who binge drink have a 53% higher odds of reporting depression or anxiety in the past 30 days. Males have a 40% lower odds of reporting poor mental health than females. Another interesting finding in that living in Puerto Rico is negatively associated with having poor mental health while living in Oregon is positively associated. 
+Binge drinking is positively associated with having poor mental health. Those who binge drink have a 53% higher odds of reporting depression or anxiety in the past 30 days. Males have a 40% lower odds of reporting poor mental health than females. Another interesting finding in that living in Puerto Rico is negatively associated with having poor mental health while living in Oregon is positively associated. The relationship between binge drinking and gender are interesting and provide insight into the associaiton between prevalence of poor mental health and other covariates.  Further research should be conducted to examine how binge drinking and mental health are related temporally given the BRFSS only captures a cross-section of data.  Binge drinking could therefore act as a copacetic for mental health if mental health truly precedes binge drinking or binge drinking is a driver of poor mental health.
 
 
 # References
